@@ -8,6 +8,18 @@ interface Props {
   onChange: (inputs: RetirementInputs) => void
 }
 
+const INPUT_STYLE: React.CSSProperties = {
+  borderColor: '#e8e6e1',
+  background: '#ffffff',
+  color: '#1a1a1a',
+  fontFamily: 'var(--font-dm-sans)',
+}
+
+function formatWithCommas(n: number): string {
+  if (n === 0) return ''
+  return new Intl.NumberFormat('en-CA').format(n)
+}
+
 function Label({ children, tooltip }: { children: React.ReactNode; tooltip?: string }) {
   return (
     <div className="flex items-center gap-1 mb-1">
@@ -22,6 +34,7 @@ function Label({ children, tooltip }: { children: React.ReactNode; tooltip?: str
   )
 }
 
+/** Plain number or text input — no comma formatting */
 function Input({
   value,
   onChange,
@@ -62,13 +75,56 @@ function Input({
         style={{
           paddingLeft: prefix ? '1.5rem' : '0.625rem',
           paddingRight: '0.625rem',
-          borderColor: '#e8e6e1',
-          background: '#ffffff',
-          color: '#1a1a1a',
-          fontFamily: 'var(--font-dm-sans)',
+          ...INPUT_STYLE,
         }}
         onFocus={(e) => (e.target.style.borderColor = '#1a1a1a')}
         onBlur={(e) => (e.target.style.borderColor = '#e8e6e1')}
+      />
+    </div>
+  )
+}
+
+/** Dollar input with comma formatting on blur */
+function DollarInput({
+  value,
+  onChange,
+  min = 0,
+  step = 1000,
+}: {
+  value: number
+  onChange: (v: number) => void
+  min?: number
+  step?: number
+}) {
+  return (
+    <div className="relative flex items-center">
+      <span className="absolute left-2.5 text-xs pointer-events-none select-none" style={{ color: '#9a9a9a' }}>$</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        defaultValue={formatWithCommas(value)}
+        key={value} // re-mount when value changes externally
+        className="w-full rounded-md border text-xs py-1.5 outline-none transition-shadow"
+        style={{ paddingLeft: '1.25rem', paddingRight: '0.625rem', ...INPUT_STYLE }}
+        onFocus={(e) => {
+          e.target.style.borderColor = '#1a1a1a'
+          // show raw number on focus
+          e.target.value = value === 0 ? '' : String(value)
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = '#e8e6e1'
+          const raw = Number(e.target.value.replace(/[^0-9.]/g, ''))
+          const clamped = min !== undefined ? Math.max(min, isNaN(raw) ? 0 : raw) : (isNaN(raw) ? 0 : raw)
+          onChange(clamped)
+          // format with commas on blur
+          e.target.value = formatWithCommas(clamped)
+        }}
+        onChange={(e) => {
+          // strip non-numeric while typing (allow digits and dot)
+          const stripped = e.target.value.replace(/[^0-9.]/g, '')
+          e.target.value = stripped
+        }}
+        placeholder="0"
       />
     </div>
   )
@@ -99,17 +155,29 @@ function SliderInput({
         className="flex-1 h-1"
         style={{ accentColor: '#1a1a1a' }}
       />
+      {/* Number box on slider also shows commas on blur */}
       <input
-        type="number"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        type="text"
+        inputMode="numeric"
+        key={value}
+        defaultValue={formatWithCommas(value)}
         className="w-20 rounded-md border text-xs py-1 px-1.5 text-right outline-none"
         style={{ borderColor: '#e8e6e1', background: '#ffffff', color: '#1a1a1a' }}
-        onFocus={(e) => (e.target.style.borderColor = '#1a1a1a')}
-        onBlur={(e) => (e.target.style.borderColor = '#e8e6e1')}
+        onFocus={(e) => {
+          e.target.style.borderColor = '#1a1a1a'
+          e.target.value = value === 0 ? '' : String(value)
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = '#e8e6e1'
+          const raw = Number(e.target.value.replace(/[^0-9.]/g, ''))
+          const clamped = Math.max(min, Math.min(max, isNaN(raw) ? 0 : raw))
+          onChange(clamped)
+          e.target.value = formatWithCommas(clamped)
+        }}
+        onChange={(e) => {
+          e.target.value = e.target.value.replace(/[^0-9.]/g, '')
+        }}
+        placeholder="0"
       />
     </div>
   )
@@ -146,7 +214,6 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
     <div className="grid grid-cols-2 gap-4 h-full" style={{ minHeight: 0 }}>
       {/* LEFT — Personal & Income */}
       <SectionCard title="Personal & Income">
-        {/* Name + Current Age */}
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label>Name</Label>
@@ -159,79 +226,44 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
           </div>
           <div>
             <Label>Current Age</Label>
-            <Input
-              value={person.currentAge}
-              onChange={(v) => setPerson('currentAge', v as number)}
-              min={18}
-              max={80}
-            />
+            <Input value={person.currentAge} onChange={(v) => setPerson('currentAge', v as number)} min={18} max={80} />
           </div>
         </div>
 
-        {/* Retirement Age + Life Expectancy */}
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label>Retirement Age</Label>
-            <Input
-              value={person.retirementAge}
-              onChange={(v) => setPerson('retirementAge', v as number)}
-              min={person.currentAge + 1}
-              max={80}
-            />
+            <Input value={person.retirementAge} onChange={(v) => setPerson('retirementAge', v as number)} min={person.currentAge + 1} max={80} />
           </div>
           <div>
             <Label>Life Expectancy</Label>
-            <Input
-              value={person.lifeExpectancy}
-              onChange={(v) => setPerson('lifeExpectancy', v as number)}
-              min={person.retirementAge + 1}
-              max={105}
-            />
+            <Input value={person.lifeExpectancy} onChange={(v) => setPerson('lifeExpectancy', v as number)} min={person.retirementAge + 1} max={105} />
           </div>
         </div>
 
-        {/* CPP/OAS Years */}
         <div>
           <Label
             tooltip={`If your total CPP/OAS contribution years will be fewer than 38 by your planned retirement age (${person.retirementAge}), enter the exact number you expect to have contributed. 38 years = full benefit (~$1,365/mo CPP + $713/mo OAS at age 65).`}
           >
             CPP/OAS Contribution Years
           </Label>
-          <Input
-            value={person.cppContributionYears}
-            onChange={(v) => setPerson('cppContributionYears', v as number)}
-            min={0}
-            max={39}
-          />
+          <Input value={person.cppContributionYears} onChange={(v) => setPerson('cppContributionYears', v as number)} min={0} max={39} />
           <p className="text-[10px] mt-1" style={{ color: '#b0aca6' }}>
             {yearsToRetirement > 0
-              ? `You have ~${yearsToRetirement} working years until retirement.`
+              ? `~${yearsToRetirement} working years until retirement.`
               : 'At or past retirement age.'}{' '}
             38 years = full CPP/OAS.
           </p>
         </div>
 
-        {/* Income */}
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label>Current Annual Income</Label>
-            <Input
-              value={person.currentIncome}
-              onChange={(v) => setPerson('currentIncome', v as number)}
-              prefix="$"
-              min={0}
-              step={1000}
-            />
+            <DollarInput value={person.currentIncome} onChange={(v) => setPerson('currentIncome', v)} />
           </div>
           <div>
             <Label>Desired Retirement Income</Label>
-            <Input
-              value={desiredRetirementIncome}
-              onChange={(v) => onChange({ ...inputs, desiredRetirementIncome: v as number })}
-              prefix="$"
-              min={0}
-              step={1000}
-            />
+            <DollarInput value={desiredRetirementIncome} onChange={(v) => onChange({ ...inputs, desiredRetirementIncome: v })} />
           </div>
         </div>
       </SectionCard>
@@ -253,43 +285,21 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
               </tr>
             </thead>
             <tbody>
-              {/* RRSP */}
               <tr>
-                <td className="py-1.5 pr-2">
-                  <span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>RRSP</span>
-                </td>
-                <td className="py-1.5 pr-2">
-                  <Input value={savings.rrspBalance} onChange={(v) => setSavings('rrspBalance', v as number)} prefix="$" min={0} step={1000} />
-                </td>
-                <td className="py-1.5">
-                  <SliderInput value={savings.rrspAnnualContribution} onChange={(v) => setSavings('rrspAnnualContribution', v)} min={0} max={31560} step={500} />
-                </td>
+                <td className="py-1.5 pr-2"><span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>RRSP</span></td>
+                <td className="py-1.5 pr-2"><DollarInput value={savings.rrspBalance} onChange={(v) => setSavings('rrspBalance', v)} /></td>
+                <td className="py-1.5"><SliderInput value={savings.rrspAnnualContribution} onChange={(v) => setSavings('rrspAnnualContribution', v)} min={0} max={31560} step={500} /></td>
               </tr>
-              {/* TFSA */}
               <tr>
-                <td className="py-1.5 pr-2">
-                  <span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>TFSA</span>
-                </td>
-                <td className="py-1.5 pr-2">
-                  <Input value={savings.tfsaBalance} onChange={(v) => setSavings('tfsaBalance', v as number)} prefix="$" min={0} step={1000} />
-                </td>
-                <td className="py-1.5">
-                  <SliderInput value={savings.tfsaAnnualContribution} onChange={(v) => setSavings('tfsaAnnualContribution', v)} min={0} max={20000} step={500} />
-                </td>
+                <td className="py-1.5 pr-2"><span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>TFSA</span></td>
+                <td className="py-1.5 pr-2"><DollarInput value={savings.tfsaBalance} onChange={(v) => setSavings('tfsaBalance', v)} /></td>
+                <td className="py-1.5"><SliderInput value={savings.tfsaAnnualContribution} onChange={(v) => setSavings('tfsaAnnualContribution', v)} min={0} max={20000} step={500} /></td>
               </tr>
-              {/* Non-Reg */}
               <tr>
-                <td className="py-1.5 pr-2">
-                  <span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Non-Reg</span>
-                </td>
-                <td className="py-1.5 pr-2">
-                  <Input value={savings.nonRegBalance} onChange={(v) => setSavings('nonRegBalance', v as number)} prefix="$" min={0} step={1000} />
-                </td>
-                <td className="py-1.5">
-                  <SliderInput value={savings.nonRegAnnualContribution} onChange={(v) => setSavings('nonRegAnnualContribution', v)} min={0} max={50000} step={500} />
-                </td>
+                <td className="py-1.5 pr-2"><span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Non-Reg</span></td>
+                <td className="py-1.5 pr-2"><DollarInput value={savings.nonRegBalance} onChange={(v) => setSavings('nonRegBalance', v)} /></td>
+                <td className="py-1.5"><SliderInput value={savings.nonRegAnnualContribution} onChange={(v) => setSavings('nonRegAnnualContribution', v)} min={0} max={50000} step={500} /></td>
               </tr>
-              {/* Other Post-Retirement */}
               <tr>
                 <td className="py-1.5 pr-2">
                   <div className="tooltip">
@@ -298,16 +308,12 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
                   </div>
                 </td>
                 <td className="py-1.5 pr-2">
-                  <div>
-                    <Label>$/month</Label>
-                    <Input value={savings.otherPostRetirementMonthly} onChange={(v) => setSavings('otherPostRetirementMonthly', v as number)} prefix="$" min={0} step={100} />
-                  </div>
+                  <Label>$/month</Label>
+                  <DollarInput value={savings.otherPostRetirementMonthly} onChange={(v) => setSavings('otherPostRetirementMonthly', v)} />
                 </td>
                 <td className="py-1.5">
-                  <div>
-                    <Label>Start age</Label>
-                    <Input value={savings.otherPostRetirementStartAge} onChange={(v) => setSavings('otherPostRetirementStartAge', v as number)} min={55} max={80} />
-                  </div>
+                  <Label>Start age</Label>
+                  <Input value={savings.otherPostRetirementStartAge} onChange={(v) => setSavings('otherPostRetirementStartAge', v as number)} min={55} max={80} />
                 </td>
               </tr>
             </tbody>

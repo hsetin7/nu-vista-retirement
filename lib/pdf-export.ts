@@ -9,8 +9,58 @@ function fmt(n: number): string {
   return `$${n.toFixed(0)}`
 }
 
+function fmtFull(n: number): string {
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)
+}
+
 function pct(n: number): string {
   return `${n.toFixed(1)}%`
+}
+
+function getBlendedReturn(a: RetirementInputs['assumptions']): number {
+  return (
+    (a.equityPct / 100) * (a.equityMeanReturn / 100) +
+    (a.bondPct / 100) * (a.bondMeanReturn / 100) +
+    (a.cashPct / 100) * (a.cashReturn / 100)
+  )
+}
+
+/**
+ * Calculate additional monthly savings required to close the retirement income gap.
+ * Returns 0 if the plan already meets the goal.
+ */
+function calcAdditionalMonthlySavings(inputs: RetirementInputs, results: ProjectionResults): number {
+  if (results.meetsGoal) return 0
+
+  const { person, desiredRetirementIncome, savings, assumptions } = inputs
+  const yearsToRetirement = Math.max(1, person.retirementAge - person.currentAge)
+  const yearsInRetirement = Math.max(1, person.lifeExpectancy - person.retirementAge)
+  const annualReturn = getBlendedReturn(assumptions)
+
+  // Government + guaranteed income per year (nominal, unindexed estimate)
+  const govtAnnual = (results.cppMonthly + results.oasMonthly) * 12 + savings.otherPostRetirementMonthly * 12
+
+  // Annual portfolio withdrawal needed
+  const annualWithdrawalNeeded = Math.max(0, desiredRetirementIncome - govtAnnual)
+
+  // Present value of that annuity stream at retirement
+  const r = annualReturn
+  const pvFactor = r > 0
+    ? (1 - Math.pow(1 + r, -yearsInRetirement)) / r
+    : yearsInRetirement
+  const neededAtRetirement = annualWithdrawalNeeded * pvFactor
+
+  const gap = Math.max(0, neededAtRetirement - results.retirementPortfolio)
+  if (gap <= 0) return 0
+
+  // Future value annuity factor (monthly contributions)
+  const monthlyRate = annualReturn / 12
+  const months = yearsToRetirement * 12
+  const fvFactor = monthlyRate > 0
+    ? (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate
+    : months
+
+  return fvFactor > 0 ? gap / fvFactor : 0
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,6 +84,8 @@ export async function exportPdf(
   const GRAY: [number, number, number] = [92, 92, 92]
   const LIGHT: [number, number, number] = [243, 242, 239]
   const AMBER: [number, number, number] = [201, 150, 76]
+  const GREEN: [number, number, number] = [45, 106, 79]
+  const RED: [number, number, number] = [184, 53, 53]
 
   let y = MARGIN
 
@@ -86,18 +138,60 @@ export async function exportPdf(
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(180, 170, 155)
-  doc.text('Retirement Planner · Forecast Report', MARGIN, 21)
+  doc.text('Retirement Planner  |  Forecast Report', MARGIN, 21)
   doc.text(
     `Generated: ${new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}`,
-    MARGIN,
-    27
+    MARGIN, 27
   )
   y = 40
 
+  // ── PERSONALIZED SUMMARY (before section 1) ──
+  const person = inputs.person
+  const displayName = person.name || 'You'
+  const additionalMonthly = calcAdditionalMonthlySavings(inputs, results)
+
+  if (results.meetsGoal) {
+    // Congratulations message
+    doc.setFillColor(230, 245, 237)
+    doc.setDrawColor(45, 106, 79)
+    doc.roundedRect(MARGIN, y, CONTENT_W, 22, 2, 2, 'FD')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(...GREEN)
+    doc.text(`Congratulations, ${displayName}!`, MARGIN + 4, y + 7)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(45, 106, 79)
+    const congrats = doc.splitTextToSize(
+      `Your current savings plan and investments are on track to support your retirement income target of ${fmtFull(inputs.desiredRetirementIncome)}/yr through age ${person.lifeExpectancy}. Well done! We recommend continuing to monitor your interest rate and inflation assumptions annually to stay on course.`,
+      CONTENT_W - 8
+    )
+    doc.text(congrats, MARGIN + 4, y + 13)
+    y += 28
+  } else {
+    // Shortfall message
+    doc.setFillColor(253, 242, 242)
+    doc.setDrawColor(184, 53, 53)
+    doc.roundedRect(MARGIN, y, CONTENT_W, 24, 2, 2, 'FD')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(...RED)
+    doc.text(`Retirement Gap Identified — ${displayName}`, MARGIN + 4, y + 7)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(184, 53, 53)
+    const shortfallText = additionalMonthly > 0
+      ? `Based on your current savings and planned investments, ${displayName} needs an additional ${fmtFull(additionalMonthly)}/month (${fmtFull(additionalMonthly * 12)}/year) in savings to achieve the retirement income target of ${fmtFull(inputs.desiredRetirementIncome)}/yr. Review your contribution strategy or consider adjusting your retirement age.`
+      : `Based on your current savings and planned investments, the portfolio may not sustain the target retirement income of ${fmtFull(inputs.desiredRetirementIncome)}/yr through age ${person.lifeExpectancy}. Consider increasing contributions or adjusting your timeline.`
+    const lines = doc.splitTextToSize(shortfallText, CONTENT_W - 8)
+    doc.text(lines, MARGIN + 4, y + 13)
+    y += 30
+  }
+
+  y += 4
+
   // ── 1. PROFILE SUMMARY ──
   sectionHeader('1.  PROFILE SUMMARY')
-
-  const person = inputs.person
 
   row2col('Name', person.name || '—', 'Current Age', `${person.currentAge}`)
   row2col('Retirement Age', `${person.retirementAge}`, 'Life Expectancy', `${person.lifeExpectancy}`)
@@ -123,10 +217,14 @@ export async function exportPdf(
   const a = inputs.assumptions
   checkPage(14)
   row2col('Asset Allocation', `Equity ${a.equityPct}% / Bond ${a.bondPct}% / Cash ${a.cashPct}%`, 'Inflation', pct(a.inflationRate))
-  row2col('Equity Return / Vol', `${pct(a.equityMeanReturn)} / ${pct(a.equityVolatility)}`, 'Bond Return / Vol', `${pct(a.bondMeanReturn)} / ${pct(a.bondVolatility)}`)
+  row2col('Equity Return / Volatility', `${pct(a.equityMeanReturn)} / ${pct(a.equityVolatility)}`, 'Bond Return / Volatility', `${pct(a.bondMeanReturn)} / ${pct(a.bondVolatility)}`)
 
   // ── 2. FORECAST METRICS ──
   sectionHeader('2.  FORECAST METRICS')
+
+  const goalText = results.meetsGoal
+    ? 'ON TRACK - Portfolio projected to last full retirement horizon'
+    : `AT RISK - Portfolio may deplete after ${results.portfolioRunwayYears} yrs (need ${person.lifeExpectancy - person.retirementAge} yrs)`
 
   autoTable(doc, {
     startY: y,
@@ -136,16 +234,23 @@ export async function exportPdf(
       ['CPP (estimated monthly)', fmt(results.cppMonthly)],
       ['OAS (estimated monthly)', fmt(results.oasMonthly)],
       ['Portfolio Runway', `${results.portfolioRunwayYears} years`],
-      ['Monte Carlo Success Rate (1,000 sims)', `${results.monteCarlo.successRate.toFixed(0)}%`],
-      ['Goal Achievement', results.meetsGoal ? '✓  On Track' : '✗  At Risk — consider increasing contributions or adjusting timeline'],
+      ['Monte Carlo Success Rate', `${results.monteCarlo.successRate.toFixed(0)}% of 1,000 simulations`],
+      ['Goal Achievement', goalText],
     ],
     styles: { fontSize: 9, cellPadding: 3, textColor: DARK },
     columnStyles: {
-      0: { fontStyle: 'bold', textColor: GRAY, cellWidth: 95 },
+      0: { fontStyle: 'bold', textColor: GRAY, cellWidth: 90 },
       1: { halign: 'right' },
     },
     alternateRowStyles: { fillColor: LIGHT },
     margin: { left: MARGIN, right: MARGIN },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    didParseCell: (data: any) => {
+      if (data.column.index === 1 && data.row.index === 6) {
+        data.cell.styles.textColor = results.meetsGoal ? GREEN : RED
+        data.cell.styles.fontStyle = 'bold'
+      }
+    },
   })
   y = doc.lastAutoTable.finalY + 8
 
@@ -155,12 +260,14 @@ export async function exportPdf(
 
   const cfBody = results.yearly.map((row) => {
     const govt = row.cppIncome + row.oasIncome + row.pensionIncome
+    const drawdown = row.rrspWithdrawal + row.tfsaWithdrawal + row.nonRegWithdrawal
     return [
       row.year.toString(),
       row.age.toString(),
       row.phase === 'accumulation' ? 'Accum.' : 'Retire',
       row.phase === 'accumulation' ? fmt(row.employmentIncome) : fmt(row.totalGrossIncome),
       govt > 0 ? fmt(govt) : '—',
+      drawdown > 0 ? fmt(drawdown) : '—',
       fmt(row.rrspBalance),
       fmt(row.tfsaBalance),
       fmt(row.nonRegBalance),
@@ -170,15 +277,15 @@ export async function exportPdf(
 
   autoTable(doc, {
     startY: y,
-    head: [['Year', 'Age', 'Phase', 'Income', 'CPP/OAS', 'RRSP', 'TFSA', 'Non-Reg', 'Total Portfolio']],
+    head: [['Year', 'Age', 'Phase', 'Income', 'CPP/OAS', 'Drawdown', 'RRSP', 'TFSA', 'Non-Reg', 'Portfolio']],
     body: cfBody,
     styles: { fontSize: 6.5, cellPadding: 1.5, textColor: DARK },
     headStyles: { fillColor: LIGHT, textColor: GRAY, fontStyle: 'bold', fontSize: 6.5 },
     margin: { left: MARGIN, right: MARGIN },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     didParseCell: (data: any) => {
-      if (data.column.index === 8 && data.cell.raw === 'Depleted') {
-        data.cell.styles.textColor = [184, 53, 53]
+      if (data.column.index === 9 && data.cell.raw === 'Depleted') {
+        data.cell.styles.textColor = RED
         data.cell.styles.fontStyle = 'bold'
       }
       if (data.column.index === 2 && data.cell.raw === 'Retire') {
@@ -207,7 +314,7 @@ export async function exportPdf(
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(...GRAY)
     doc.text(
-      `Nu Vista Analytics · Retirement Planner · Page ${i} of ${pageCount}`,
+      `Nu Vista Analytics  |  Retirement Planner  |  Page ${i} of ${pageCount}`,
       MARGIN,
       doc.internal.pageSize.height - 8
     )

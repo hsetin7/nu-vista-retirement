@@ -17,21 +17,18 @@ export default function ProjectionsSection({ results, inputs, onRunSimulation }:
       <div className="flex flex-col items-center justify-center h-full text-center px-6">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-          style={{ background: '#eff6ff' }}
+          style={{ background: '#f3f2ef' }}
         >
           <span className="text-2xl">📊</span>
         </div>
-        <h2 className="text-base font-semibold mb-2" style={{ color: '#111827' }}>No projections yet</h2>
-        <p className="text-xs mb-5 max-w-xs" style={{ color: '#6b7280' }}>
-          Fill in your profile on the Inputs tab, then click{' '}
-          <span className="font-medium" style={{ color: '#2563eb' }}>Run Simulation</span>.
+        <h2 className="text-base font-semibold mb-2" style={{ color: '#1a1a1a' }}>No forecast yet</h2>
+        <p className="text-xs mb-5 max-w-xs" style={{ color: '#5c5c5c' }}>
+          Fill in your profile, then click{' '}
+          <span className="font-medium" style={{ color: '#1a1a1a' }}>Run Analysis</span>{' '}
+          in the left panel.
         </p>
-        <button
-          onClick={onRunSimulation}
-          className="px-4 py-2 text-white text-xs font-semibold rounded transition-colors hover:opacity-90"
-          style={{ background: '#2563eb' }}
-        >
-          Run Simulation
+        <button onClick={onRunSimulation} className="btn-3d btn-primary-3d">
+          Run Analysis
         </button>
       </div>
     )
@@ -39,22 +36,22 @@ export default function ProjectionsSection({ results, inputs, onRunSimulation }:
 
   const runwayNeeded = inputs.person.lifeExpectancy - inputs.person.retirementAge
   const meetsGoal = results.portfolioRunwayYears >= runwayNeeded
+  const displayName = inputs.person.name || 'your portfolio'
 
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
       {/* Goal banner */}
       <div
-        className="mx-4 mt-3 mb-0 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2"
+        className="mx-4 mt-3 mb-0 px-3 py-2 rounded-lg text-xs font-medium"
         style={{
-          background: meetsGoal ? '#f0fdf4' : '#fef2f2',
-          border: `1px solid ${meetsGoal ? '#bbf7d0' : '#fecaca'}`,
-          color: meetsGoal ? '#059669' : '#dc2626',
+          background: meetsGoal ? '#e6f5ed' : '#fde8e8',
+          border: `1px solid ${meetsGoal ? '#a3d9b8' : '#f4b8b8'}`,
+          color: meetsGoal ? '#2d6a4f' : '#b83535',
         }}
       >
-        <span>{meetsGoal ? '✓' : '✗'}</span>
         {meetsGoal
-          ? `On track — portfolio projected to last ${results.portfolioRunwayYears} years through retirement (${runwayNeeded} years needed).`
-          : `At risk — portfolio may deplete after ${results.portfolioRunwayYears} years, but you need ${runwayNeeded} years. Consider increasing contributions or adjusting retirement age.`}
+          ? `On track — ${displayName}'s portfolio is projected to last ${results.portfolioRunwayYears} years through retirement (${runwayNeeded} years needed).`
+          : `At risk — ${displayName}'s portfolio may deplete after ${results.portfolioRunwayYears} years, but ${runwayNeeded} years are needed. Consider increasing contributions or adjusting retirement age.`}
       </div>
 
       <div className="flex-1 overflow-y-auto panel-scroll px-4 py-3 flex flex-col gap-3" style={{ minHeight: 0 }}>
