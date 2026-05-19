@@ -97,7 +97,7 @@ export default function InvestmentAssumptionsTab({ inputs, onChange }: Props) {
   const total = a.equityPct + a.bondPct + a.cashPct
 
   return (
-    <div className="grid grid-cols-2 gap-4 h-full" style={{ minHeight: 0 }}>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4"style={{ minHeight: 0 }}>
       {/* LEFT: Asset Allocation */}
       <SectionCard title="Portfolio Asset Allocation">
         <div className="flex flex-col gap-4">

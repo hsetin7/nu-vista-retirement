@@ -54,9 +54,9 @@ export default function ProjectionsSection({ results, inputs, onRunSimulation }:
           : `At risk — ${displayName}'s portfolio may deplete after ${results.portfolioRunwayYears} years, but ${runwayNeeded} years are needed. Consider increasing contributions or adjusting retirement age.`}
       </div>
 
-      <div className="flex-1 overflow-y-auto panel-scroll px-4 py-3 flex flex-col gap-3" style={{ minHeight: 0 }}>
+      <div className="flex-1 overflow-y-auto panel-scroll px-4 py-3 flex flex-col gap-3"style={{ minHeight: 0 }}>
         <KeyMetrics results={results} inputs={inputs} />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <PortfolioChart results={results} inputs={inputs} />
           <SensitivityPanel baseInputs={inputs} />
         </div>

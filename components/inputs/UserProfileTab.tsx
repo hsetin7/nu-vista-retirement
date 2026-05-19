@@ -186,7 +186,7 @@ function SliderInput({
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div
-      className="rounded-xl border p-4 flex flex-col gap-3 h-full"
+      className="rounded-xl border p-4 flex flex-col gap-3"
       style={{ borderColor: '#e8e6e1', background: '#ffffff', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
     >
       <h3 className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#9a9a9a' }}>
@@ -211,7 +211,7 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
   const yearsToRetirement = Math.max(0, person.retirementAge - person.currentAge)
 
   return (
-    <div className="grid grid-cols-2 gap-4 h-full" style={{ minHeight: 0 }}>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4"style={{ minHeight: 0 }}>
       {/* LEFT — Personal & Income */}
       <SectionCard title="Personal & Income">
         <div className="grid grid-cols-2 gap-2">

@@ -41,8 +41,8 @@ export default function InputsSection({ inputs, onChange, activeTab, onTabChange
         </div>
       </div>
 
-      {/* Tab content — fills remaining height, no outer scroll */}
-      <div className="flex-1 overflow-hidden p-4" style={{ background: '#f6f8fa', minHeight: 0 }}>
+      {/* Tab content */}
+      <div className="flex-1 overflow-auto md:overflow-hidden p-4" style={{ background: '#f6f8fa', minHeight: 0 }}>
         {activeTab === 'profile' && (
           <UserProfileTab inputs={inputs} onChange={onChange} />
         )}

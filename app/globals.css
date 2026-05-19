@@ -40,6 +40,14 @@ html, body {
   overflow: hidden;
 }
 
+/* Mobile: allow natural scroll, remove fixed height lock */
+@media (max-width: 767px) {
+  html, body {
+    height: auto;
+    overflow: auto;
+  }
+}
+
 body {
   font-family: var(--font-dm-sans), 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--color-bg);

@@ -44,7 +44,7 @@ export default function KeyMetrics({ results, inputs }: Props) {
   const runwayOk = results.portfolioRunwayYears >= runwayNeeded
 
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       <Card
         label="Portfolio at Retirement"
         value={formatCurrency(results.retirementPortfolio, true)}
