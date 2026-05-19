@@ -36,8 +36,10 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
     person.cppContributionYears,
     person.retirementAge
   )
-  // Base OAS before clawback — prorated by residency years (40 = full benefit)
+  // Base OAS prorated by residency years (40 years = full $713.34/mo)
   const baseOasMonthly = calcBaseOasMonthly(person.cppContributionYears)
+  // OAS for display: post-clawback based on CPP income only (at retirement age)
+  const oasMonthly = applyOasClawback(baseOasMonthly, cppMonthly * 12)
 
   let rrsp = savings.rrspBalance
   let tfsa = savings.tfsaBalance
@@ -94,12 +96,12 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
           ? savings.otherPostRetirementMonthly * 12 * inflationFactor
           : 0
 
-      // Step 1: Estimate OAS using only CPP + pension (no withdrawals yet) to determine shortfall
-      const oasEstimate = age >= 65
+      oasIncome = age >= 65
         ? applyOasClawback(baseOasInflated, cppIncome + pensionIncome) * 12
         : 0
-      const guaranteedEstimate = cppIncome + oasEstimate + pensionIncome
-      const shortfall = Math.max(0, targetSpend - guaranteedEstimate)
+
+      const guaranteedIncome = cppIncome + oasIncome + pensionIncome
+      const shortfall = Math.max(0, targetSpend - guaranteedIncome)
 
       rrsp = rrsp * (1 + nominalReturn)
       tfsa = tfsa * (1 + nominalReturn)
@@ -121,12 +123,6 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
         nonRegWithdrawal = Math.min(nonReg, remaining)
         nonReg = Math.max(0, nonReg - nonRegWithdrawal)
       }
-
-      // Step 2: Recalculate OAS clawback using actual taxable income (excludes TFSA withdrawals)
-      const taxableIncomeForClawback = cppIncome + pensionIncome + rrspWithdrawal + nonRegWithdrawal * 0.5
-      oasIncome = age >= 65
-        ? applyOasClawback(baseOasInflated, taxableIncomeForClawback) * 12
-        : 0
 
       const grossIncome = cppIncome + oasIncome + pensionIncome + rrspWithdrawal + nonRegWithdrawal * 0.5
       taxPaid = calcCombinedTax(Math.max(0, grossIncome))
@@ -170,8 +166,6 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
 
   const retirementRow = yearly.find((r) => r.age === person.retirementAge)
   const retirementPortfolio = retirementRow?.totalPortfolio ?? 0
-  // Use first retirement year's actual OAS (post-clawback) for display
-  const oasMonthly = retirementRow ? retirementRow.oasIncome / 12 : 0
 
   const retirementRows = yearly.filter((r) => r.phase === 'retirement')
   const lastPositiveRow = [...retirementRows].reverse().find((r) => r.totalPortfolio > 0)

@@ -2,10 +2,28 @@
 
 const RELEASES = [
   {
-    version: 'v2.0',
+    version: 'v2.3',
     date: 'May 2026',
     badge: 'Latest',
     badgeColor: '#059669',
+    items: [
+      'Two-phase Cash Flow charts: Accumulation (stacked area, current age → retirement) and Distribution (declining balance + annual income by source)',
+      'Annual Income by Source bar chart now shows CPP, OAS, Pension, and per-account drawdowns with matching RRSP/TFSA/Non-Reg colours',
+      'OAS clawback corrected: single-pass calculation using CPP + pension income as the clawback base (was using full taxable income including RRSP withdrawals, causing understatement)',
+      'OAS residency proration corrected: full benefit now requires 40 years of Canadian residency (was incorrectly using 39)',
+      'Beginning-of-year contribution model: contributions now earn a full year of growth, yielding more accurate balance projections',
+      'Mobile responsive layout: fixed bottom navigation bar with 5 items (Profile, Forecast, Run, Cash Flow, Version); sidebar hidden on mobile',
+      'Font sizes increased by 1pt across all UI text, chart axis labels, and legend items',
+      'Sidebar icons updated: CircleUser (Profile), TrendingUp (Forecast), Wallet (Cash Flow)',
+      'Sidebar layout restructured: Run Analysis and Download Results moved under Cash Flow; Version Control moved to footer',
+      'CPP / OAS Qualifying Years label updated with detailed tooltip distinguishing CPP (39-year contribution) vs OAS (40-year residency)',
+    ],
+  },
+  {
+    version: 'v2.0',
+    date: 'May 2026',
+    badge: '',
+    badgeColor: '#6b7280',
     items: [
       'Redesigned UI — Wealthsimple-inspired clean layout with zero-scroll desktop view',
       'Consolidated inputs into 2 tabs: User Profile and Investments & Assumptions',
