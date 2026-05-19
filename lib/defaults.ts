@@ -7,7 +7,7 @@ export const DEFAULT_INPUTS: RetirementInputs = {
     retirementAge: 65,
     lifeExpectancy: 90,
     currentIncome: 0,
-    cppContributionYears: 38,
+    cppContributionYears: 40,
   },
   desiredRetirementIncome: 0,
   savings: {

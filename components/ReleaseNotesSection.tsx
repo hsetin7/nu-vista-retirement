@@ -2,10 +2,22 @@
 
 const RELEASES = [
   {
-    version: 'v2.3',
+    version: 'v2.4',
     date: 'May 2026',
     badge: 'Latest',
     badgeColor: '#059669',
+    items: [
+      'Moved CPP / OAS qualifying years input to Investment Assumptions tab for better context',
+      'Default qualifying years changed to 40 (full residency / contribution ceiling)',
+      'Added Government of Canada help links for CPP and OAS benefit calculations',
+      'Residency note: clarifies that OAS requires 40 years of Canadian residency for full $713/mo; CPP prorated over 39 contribution years',
+    ],
+  },
+  {
+    version: 'v2.3',
+    date: 'May 2026',
+    badge: '',
+    badgeColor: '#6b7280',
     items: [
       'Two-phase Cash Flow charts: Accumulation (stacked area, current age → retirement) and Distribution (declining balance + annual income by source)',
       'Annual Income by Source bar chart now shows CPP, OAS, Pension, and per-account drawdowns with matching RRSP/TFSA/Non-Reg colours',

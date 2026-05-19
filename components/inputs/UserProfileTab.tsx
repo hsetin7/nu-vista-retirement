@@ -208,8 +208,6 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
     onChange({ ...inputs, savings: { ...savings, [key]: value } })
   }
 
-  const yearsToRetirement = Math.max(0, person.retirementAge - person.currentAge)
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4"style={{ minHeight: 0 }}>
       {/* LEFT — Personal & Income */}
@@ -239,21 +237,6 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
             <Label>Life Expectancy</Label>
             <Input value={person.lifeExpectancy} onChange={(v) => setPerson('lifeExpectancy', v as number)} min={person.retirementAge + 1} max={105} />
           </div>
-        </div>
-
-        <div>
-          <Label
-            tooltip={`CPP pays full ~$1,365/mo at 65 after 39 years of contributions (working & paying into CPP). OAS pays full ~$713/mo at 65 after 40 years of Canadian residency. If you expect fewer than 39–40 years by retirement, enter the lower number — both benefits are prorated accordingly.`}
-          >
-            CPP / OAS Qualifying Years
-          </Label>
-          <Input value={person.cppContributionYears} onChange={(v) => setPerson('cppContributionYears', v as number)} min={0} max={40} />
-          <p className="text-[11px] mt-1" style={{ color: '#b0aca6' }}>
-            {yearsToRetirement > 0
-              ? `~${yearsToRetirement} working years left.`
-              : 'At or past retirement age.'}{' '}
-            Default 38 = near-full benefits. Lower this if you worked fewer years or lived outside Canada for a period.
-          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">

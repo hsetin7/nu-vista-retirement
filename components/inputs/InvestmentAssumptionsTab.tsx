@@ -1,6 +1,6 @@
 'use client'
 
-import type { RetirementInputs, AssumptionsInputs } from '@/types/retirement'
+import type { RetirementInputs, AssumptionsInputs, Person } from '@/types/retirement'
 
 interface Props {
   inputs: RetirementInputs
@@ -93,11 +93,15 @@ export default function InvestmentAssumptionsTab({ inputs, onChange }: Props) {
   const a = inputs.assumptions
   const update = (patch: Partial<AssumptionsInputs>) =>
     onChange({ ...inputs, assumptions: { ...a, ...patch } })
+  const updatePerson = (patch: Partial<Person>) =>
+    onChange({ ...inputs, person: { ...inputs.person, ...patch } })
 
   const total = a.equityPct + a.bondPct + a.cashPct
+  const yearsToRetirement = Math.max(0, inputs.person.retirementAge - inputs.person.currentAge)
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4"style={{ minHeight: 0 }}>
+    <div className="flex flex-col gap-4" style={{ minHeight: 0 }}>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* LEFT: Asset Allocation */}
       <SectionCard title="Portfolio Asset Allocation">
         <div className="flex flex-col gap-4">
@@ -183,6 +187,66 @@ export default function InvestmentAssumptionsTab({ inputs, onChange }: Props) {
           </p>
         </div>
       </SectionCard>
+    </div>
+
+    {/* Government Benefits */}
+    <SectionCard title="Government Benefits — CPP &amp; OAS Qualifying Years">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+          <div className="flex-1">
+            <p className="text-[13px] font-medium mb-1" style={{ color: '#374151' }}>
+              Canadian Residency / Contribution Years by Retirement
+            </p>
+            <p className="text-[12px] leading-relaxed" style={{ color: '#9ca3af' }}>
+              If you will be a Canadian resident for <span className="font-semibold" style={{ color: '#374151' }}>less than 40 years</span> at your retirement age, enter your actual number of years.
+              OAS requires 40 years of post-age-18 residency for the full ~$713/mo benefit — each missing year reduces it proportionally.
+              CPP is similarly prorated based on years you contributed (maximum 39 years).
+            </p>
+            <p className="text-[12px] mt-1.5" style={{ color: '#9ca3af' }}>
+              {yearsToRetirement > 0
+                ? `You have ~${yearsToRetirement} working years remaining before retirement.`
+                : 'You are at or past your retirement age.'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <input
+              type="number"
+              min={0}
+              max={40}
+              step={1}
+              value={inputs.person.cppContributionYears}
+              onChange={(e) => updatePerson({ cppContributionYears: Math.min(40, Math.max(0, Number(e.target.value) || 0)) })}
+              className="w-16 rounded-md border text-[13px] py-1.5 px-2 text-right outline-none focus:ring-1 focus:ring-blue-500 transition-shadow"
+              style={{ borderColor: '#e8e6e1', background: '#ffffff', color: '#111827' }}
+              onFocus={(e) => (e.target.style.borderColor = '#1a1a1a')}
+              onBlur={(e) => (e.target.style.borderColor = '#e8e6e1')}
+            />
+            <span className="text-[13px] font-medium" style={{ color: '#6b7280' }}>yrs</span>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3 pt-1">
+          <a
+            href="https://www.canada.ca/en/services/benefits/publicpensions/cpp.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-[12px] font-medium hover:underline"
+            style={{ color: '#2563eb' }}
+          >
+            <span>🍁</span> CPP — How your benefit is calculated (Canada.ca)
+          </a>
+          <a
+            href="https://www.canada.ca/en/services/benefits/publicpensions/cpp/old-age-security.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-[12px] font-medium hover:underline"
+            style={{ color: '#2563eb' }}
+          >
+            <span>🍁</span> OAS — How your benefit is calculated (Canada.ca)
+          </a>
+        </div>
+      </div>
+    </SectionCard>
     </div>
   )
 }
