@@ -27,7 +27,7 @@ function boxMullerRandom(): number {
 
 export function runProjection(inputs: RetirementInputs): ProjectionResults {
   const { person, savings, assumptions, desiredRetirementIncome } = inputs
-  const currentAge = CURRENT_YEAR - person.birthYear
+  const currentAge = person.currentAge
   const inflation = assumptions.inflationRate / 100
   const nominalReturn = getBlendedReturn(assumptions)
 
@@ -45,9 +45,7 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
   const yearly: YearlyProjection[] = []
   let totalContributed = savings.rrspBalance + savings.tfsaBalance + savings.nonRegBalance
 
-  const startAge = Math.max(currentAge, 18)
-
-  for (let age = startAge; age <= person.lifeExpectancy; age++) {
+  for (let age = currentAge; age <= person.lifeExpectancy; age++) {
     const year = CURRENT_YEAR + (age - currentAge)
     const phase: 'accumulation' | 'retirement' = age < person.retirementAge ? 'accumulation' : 'retirement'
     const yearsFromRetirement = Math.max(0, age - person.retirementAge)
@@ -86,7 +84,6 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
       taxPaid = calcCombinedTax(taxableIncome)
       expenses = 0
     } else {
-      // Decumulation
       const targetSpend = desiredRetirementIncome * inflationFactor
 
       cppIncome = cppMonthly * 12 * inflationFactor
@@ -99,26 +96,22 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
       const guaranteedIncome = cppIncome + oasIncome + pensionIncome
       const shortfall = Math.max(0, targetSpend - guaranteedIncome)
 
-      // Grow first, then withdraw
       rrsp = rrsp * (1 + nominalReturn)
       tfsa = tfsa * (1 + nominalReturn)
       nonReg = nonReg * (1 + nominalReturn)
 
       let remaining = shortfall
-      // RRSP first (gross up for tax ~30%)
       if (rrsp > 0 && remaining > 0) {
         const gross = Math.min(rrsp, remaining * 1.35)
         rrspWithdrawal = gross
         rrsp = Math.max(0, rrsp - rrspWithdrawal)
         remaining = Math.max(0, remaining - rrspWithdrawal * 0.74)
       }
-      // TFSA next (tax-free)
       if (tfsa > 0 && remaining > 0) {
         tfsaWithdrawal = Math.min(tfsa, remaining)
         tfsa = Math.max(0, tfsa - tfsaWithdrawal)
         remaining = Math.max(0, remaining - tfsaWithdrawal)
       }
-      // Non-reg last
       if (nonReg > 0 && remaining > 0) {
         nonRegWithdrawal = Math.min(nonReg, remaining)
         nonReg = Math.max(0, nonReg - nonRegWithdrawal)
@@ -197,7 +190,7 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
 
 function runMonteCarlo(inputs: RetirementInputs, runs = 1000): MonteCarloResult {
   const { person, savings, assumptions, desiredRetirementIncome } = inputs
-  const currentAge = CURRENT_YEAR - person.birthYear
+  const currentAge = person.currentAge
   const yearsToRetirement = Math.max(0, person.retirementAge - currentAge)
   const yearsInRetirement = Math.max(1, person.lifeExpectancy - person.retirementAge)
   const totalYears = yearsToRetirement + yearsInRetirement

@@ -8,15 +8,13 @@ interface Props {
   onChange: (inputs: RetirementInputs) => void
 }
 
-const CURRENT_YEAR = new Date().getFullYear()
-
 function Label({ children, tooltip }: { children: React.ReactNode; tooltip?: string }) {
   return (
     <div className="flex items-center gap-1 mb-1">
-      <span className="text-[11px] font-medium" style={{ color: '#374151' }}>{children}</span>
+      <span className="text-[11px] font-medium" style={{ color: '#5c5c5c' }}>{children}</span>
       {tooltip && (
         <div className="tooltip">
-          <HelpCircle size={11} style={{ color: '#9ca3af', cursor: 'help' }} />
+          <HelpCircle size={11} style={{ color: '#b0aca6', cursor: 'help' }} />
           <div className="tooltip-content">{tooltip}</div>
         </div>
       )}
@@ -46,10 +44,7 @@ function Input({
   return (
     <div className="relative flex items-center">
       {prefix && (
-        <span
-          className="absolute left-2.5 text-xs pointer-events-none select-none"
-          style={{ color: '#6b7280' }}
-        >
+        <span className="absolute left-2.5 text-xs pointer-events-none select-none" style={{ color: '#9a9a9a' }}>
           {prefix}
         </span>
       )}
@@ -63,14 +58,17 @@ function Input({
         onChange={(e) =>
           onChange(type === 'number' ? (e.target.value === '' ? 0 : Number(e.target.value)) : e.target.value)
         }
-        className="w-full rounded border text-xs py-1.5 outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full rounded-md border text-xs py-1.5 outline-none focus:ring-1 transition-shadow"
         style={{
-          paddingLeft: prefix ? '1.5rem' : '0.5rem',
-          paddingRight: '0.5rem',
-          borderColor: '#e5e7eb',
-          background: '#fff',
-          color: '#111827',
+          paddingLeft: prefix ? '1.5rem' : '0.625rem',
+          paddingRight: '0.625rem',
+          borderColor: '#e8e6e1',
+          background: '#ffffff',
+          color: '#1a1a1a',
+          fontFamily: 'var(--font-dm-sans)',
         }}
+        onFocus={(e) => (e.target.style.borderColor = '#1a1a1a')}
+        onBlur={(e) => (e.target.style.borderColor = '#e8e6e1')}
       />
     </div>
   )
@@ -90,7 +88,7 @@ function SliderInput({
   step?: number
 }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       <input
         type="range"
         min={min}
@@ -99,7 +97,7 @@ function SliderInput({
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className="flex-1 h-1"
-        style={{ accentColor: '#2563eb' }}
+        style={{ accentColor: '#1a1a1a' }}
       />
       <input
         type="number"
@@ -108,8 +106,10 @@ function SliderInput({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-20 rounded border text-xs py-1 px-1.5 text-right outline-none focus:ring-1 focus:ring-blue-500"
-        style={{ borderColor: '#e5e7eb', background: '#fff', color: '#111827' }}
+        className="w-20 rounded-md border text-xs py-1 px-1.5 text-right outline-none"
+        style={{ borderColor: '#e8e6e1', background: '#ffffff', color: '#1a1a1a' }}
+        onFocus={(e) => (e.target.style.borderColor = '#1a1a1a')}
+        onBlur={(e) => (e.target.style.borderColor = '#e8e6e1')}
       />
     </div>
   )
@@ -118,10 +118,10 @@ function SliderInput({
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div
-      className="rounded-lg border p-4 flex flex-col gap-3 h-full"
-      style={{ borderColor: '#e5e7eb', background: '#fff' }}
+      className="rounded-xl border p-4 flex flex-col gap-3 h-full"
+      style={{ borderColor: '#e8e6e1', background: '#ffffff', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
     >
-      <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#6b7280' }}>
+      <h3 className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#9a9a9a' }}>
         {title}
       </h3>
       {children}
@@ -131,7 +131,6 @@ function SectionCard({ title, children }: { title: string; children: React.React
 
 export default function UserProfileTab({ inputs, onChange }: Props) {
   const { person, savings, desiredRetirementIncome } = inputs
-  const currentAge = CURRENT_YEAR - person.birthYear
 
   function setPerson<K extends keyof typeof person>(key: K, value: typeof person[K]) {
     onChange({ ...inputs, person: { ...person, [key]: value } })
@@ -141,11 +140,13 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
     onChange({ ...inputs, savings: { ...savings, [key]: value } })
   }
 
+  const yearsToRetirement = Math.max(0, person.retirementAge - person.currentAge)
+
   return (
     <div className="grid grid-cols-2 gap-4 h-full" style={{ minHeight: 0 }}>
-      {/* LEFT: Personal & Income */}
+      {/* LEFT — Personal & Income */}
       <SectionCard title="Personal & Income">
-        {/* Name + Birth Year */}
+        {/* Name + Current Age */}
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label>Name</Label>
@@ -157,40 +158,27 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
             />
           </div>
           <div>
-            <Label>Birth Year</Label>
-            <Input
-              value={person.birthYear}
-              onChange={(v) => setPerson('birthYear', v as number)}
-              min={1940}
-              max={CURRENT_YEAR - 18}
-            />
-          </div>
-        </div>
-
-        {/* Age display + Retirement Age */}
-        <div className="grid grid-cols-2 gap-2">
-          <div>
             <Label>Current Age</Label>
-            <div
-              className="rounded border px-2.5 py-1.5 text-xs"
-              style={{ borderColor: '#e5e7eb', background: '#f6f8fa', color: '#6b7280' }}
-            >
-              {currentAge} years old
-            </div>
-          </div>
-          <div>
-            <Label>Retirement Age</Label>
             <Input
-              value={person.retirementAge}
-              onChange={(v) => setPerson('retirementAge', v as number)}
-              min={currentAge + 1}
+              value={person.currentAge}
+              onChange={(v) => setPerson('currentAge', v as number)}
+              min={18}
               max={80}
             />
           </div>
         </div>
 
-        {/* Life Expectancy + CPP Years */}
+        {/* Retirement Age + Life Expectancy */}
         <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label>Retirement Age</Label>
+            <Input
+              value={person.retirementAge}
+              onChange={(v) => setPerson('retirementAge', v as number)}
+              min={person.currentAge + 1}
+              max={80}
+            />
+          </div>
           <div>
             <Label>Life Expectancy</Label>
             <Input
@@ -200,19 +188,27 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
               max={105}
             />
           </div>
-          <div>
-            <Label
-              tooltip="38–39 years of contributions = full CPP/OAS benefits. Fewer years = proportionally reduced benefit."
-            >
-              CPP/OAS Years
-            </Label>
-            <Input
-              value={person.cppContributionYears}
-              onChange={(v) => setPerson('cppContributionYears', v as number)}
-              min={0}
-              max={39}
-            />
-          </div>
+        </div>
+
+        {/* CPP/OAS Years */}
+        <div>
+          <Label
+            tooltip={`If your total CPP/OAS contribution years will be fewer than 38 by your planned retirement age (${person.retirementAge}), enter the exact number you expect to have contributed. 38 years = full benefit (~$1,365/mo CPP + $713/mo OAS at age 65).`}
+          >
+            CPP/OAS Contribution Years
+          </Label>
+          <Input
+            value={person.cppContributionYears}
+            onChange={(v) => setPerson('cppContributionYears', v as number)}
+            min={0}
+            max={39}
+          />
+          <p className="text-[10px] mt-1" style={{ color: '#b0aca6' }}>
+            {yearsToRetirement > 0
+              ? `You have ~${yearsToRetirement} working years until retirement.`
+              : 'At or past retirement age.'}{' '}
+            38 years = full CPP/OAS.
+          </p>
         </div>
 
         {/* Income */}
@@ -238,132 +234,79 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
             />
           </div>
         </div>
-
-        <p className="text-[10px] leading-relaxed" style={{ color: '#9ca3af' }}>
-          38 years of CPP/OAS contributions = full benefits (~$1,365/mo CPP + $713/mo OAS).
-        </p>
       </SectionCard>
 
-      {/* RIGHT: Account Balances & Targets */}
-      <SectionCard title="Account Balances & Annual Savings Targets">
+      {/* RIGHT — Account Balances & Targets */}
+      <SectionCard title="Account Balances & Annual Savings">
         <div className="overflow-x-auto">
           <table style={{ tableLayout: 'fixed' }}>
             <colgroup>
-              <col style={{ width: '60px' }} />
-              <col style={{ width: '110px' }} />
+              <col style={{ width: '64px' }} />
+              <col style={{ width: '112px' }} />
               <col />
             </colgroup>
             <thead>
               <tr>
-                <th className="text-left text-[10px] font-semibold pb-2 pr-1" style={{ color: '#6b7280' }}>Account</th>
-                <th className="text-left text-[10px] font-semibold pb-2 pr-2" style={{ color: '#6b7280' }}>Current Balance</th>
-                <th className="text-left text-[10px] font-semibold pb-2" style={{ color: '#6b7280' }}>Annual Contribution</th>
+                <th className="text-left text-[10px] font-semibold pb-2 pr-2" style={{ color: '#9a9a9a' }}>Account</th>
+                <th className="text-left text-[10px] font-semibold pb-2 pr-2" style={{ color: '#9a9a9a' }}>Balance</th>
+                <th className="text-left text-[10px] font-semibold pb-2" style={{ color: '#9a9a9a' }}>Annual Contribution</th>
               </tr>
             </thead>
             <tbody>
               {/* RRSP */}
               <tr>
-                <td className="py-1.5 pr-1">
-                  <span className="text-xs font-medium" style={{ color: '#111827' }}>RRSP</span>
+                <td className="py-1.5 pr-2">
+                  <span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>RRSP</span>
                 </td>
                 <td className="py-1.5 pr-2">
-                  <Input
-                    value={savings.rrspBalance}
-                    onChange={(v) => setSavings('rrspBalance', v as number)}
-                    prefix="$"
-                    min={0}
-                    step={1000}
-                  />
+                  <Input value={savings.rrspBalance} onChange={(v) => setSavings('rrspBalance', v as number)} prefix="$" min={0} step={1000} />
                 </td>
                 <td className="py-1.5">
-                  <SliderInput
-                    value={savings.rrspAnnualContribution}
-                    onChange={(v) => setSavings('rrspAnnualContribution', v)}
-                    min={0}
-                    max={31560}
-                    step={500}
-                  />
+                  <SliderInput value={savings.rrspAnnualContribution} onChange={(v) => setSavings('rrspAnnualContribution', v)} min={0} max={31560} step={500} />
                 </td>
               </tr>
               {/* TFSA */}
               <tr>
-                <td className="py-1.5 pr-1">
-                  <span className="text-xs font-medium" style={{ color: '#111827' }}>TFSA</span>
+                <td className="py-1.5 pr-2">
+                  <span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>TFSA</span>
                 </td>
                 <td className="py-1.5 pr-2">
-                  <Input
-                    value={savings.tfsaBalance}
-                    onChange={(v) => setSavings('tfsaBalance', v as number)}
-                    prefix="$"
-                    min={0}
-                    step={1000}
-                  />
+                  <Input value={savings.tfsaBalance} onChange={(v) => setSavings('tfsaBalance', v as number)} prefix="$" min={0} step={1000} />
                 </td>
                 <td className="py-1.5">
-                  <SliderInput
-                    value={savings.tfsaAnnualContribution}
-                    onChange={(v) => setSavings('tfsaAnnualContribution', v)}
-                    min={0}
-                    max={20000}
-                    step={500}
-                  />
+                  <SliderInput value={savings.tfsaAnnualContribution} onChange={(v) => setSavings('tfsaAnnualContribution', v)} min={0} max={20000} step={500} />
                 </td>
               </tr>
               {/* Non-Reg */}
               <tr>
-                <td className="py-1.5 pr-1">
-                  <span className="text-xs font-medium" style={{ color: '#111827' }}>Non-Reg</span>
+                <td className="py-1.5 pr-2">
+                  <span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Non-Reg</span>
                 </td>
                 <td className="py-1.5 pr-2">
-                  <Input
-                    value={savings.nonRegBalance}
-                    onChange={(v) => setSavings('nonRegBalance', v as number)}
-                    prefix="$"
-                    min={0}
-                    step={1000}
-                  />
+                  <Input value={savings.nonRegBalance} onChange={(v) => setSavings('nonRegBalance', v as number)} prefix="$" min={0} step={1000} />
                 </td>
                 <td className="py-1.5">
-                  <SliderInput
-                    value={savings.nonRegAnnualContribution}
-                    onChange={(v) => setSavings('nonRegAnnualContribution', v)}
-                    min={0}
-                    max={50000}
-                    step={500}
-                  />
+                  <SliderInput value={savings.nonRegAnnualContribution} onChange={(v) => setSavings('nonRegAnnualContribution', v)} min={0} max={50000} step={500} />
                 </td>
               </tr>
               {/* Other Post-Retirement */}
               <tr>
-                <td className="py-1.5 pr-1">
+                <td className="py-1.5 pr-2">
                   <div className="tooltip">
-                    <span className="text-xs font-medium underline decoration-dotted cursor-help" style={{ color: '#111827' }}>Other*</span>
-                    <div className="tooltip-content">
-                      Other Post-Retirement Income: pensions, spousal pensions, or any guaranteed income available after retirement.
-                    </div>
+                    <span className="text-xs font-semibold underline decoration-dotted cursor-help" style={{ color: '#1a1a1a' }}>Other*</span>
+                    <div className="tooltip-content">Pensions, spousal pensions, or any guaranteed income available after retirement.</div>
                   </div>
                 </td>
                 <td className="py-1.5 pr-2">
                   <div>
                     <Label>$/month</Label>
-                    <Input
-                      value={savings.otherPostRetirementMonthly}
-                      onChange={(v) => setSavings('otherPostRetirementMonthly', v as number)}
-                      prefix="$"
-                      min={0}
-                      step={100}
-                    />
+                    <Input value={savings.otherPostRetirementMonthly} onChange={(v) => setSavings('otherPostRetirementMonthly', v as number)} prefix="$" min={0} step={100} />
                   </div>
                 </td>
                 <td className="py-1.5">
                   <div>
-                    <Label>Starts at age</Label>
-                    <Input
-                      value={savings.otherPostRetirementStartAge}
-                      onChange={(v) => setSavings('otherPostRetirementStartAge', v as number)}
-                      min={55}
-                      max={80}
-                    />
+                    <Label>Start age</Label>
+                    <Input value={savings.otherPostRetirementStartAge} onChange={(v) => setSavings('otherPostRetirementStartAge', v as number)} min={55} max={80} />
                   </div>
                 </td>
               </tr>
@@ -371,9 +314,8 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
           </table>
         </div>
 
-        <p className="text-[10px] leading-relaxed" style={{ color: '#9ca3af' }}>
-          * Other Post-Retirement Income: pensions, spousal pensions, or guaranteed income sources available after retirement.
-          Annual contribution sliders max at RRSP $31,560 and TFSA $7,000 (2026 limits).
+        <p className="text-[10px] leading-relaxed" style={{ color: '#b0aca6' }}>
+          * Other: pensions, spousal pensions, or guaranteed post-retirement income. RRSP max $31,560 · TFSA $7,000 (2026 limits).
         </p>
       </SectionCard>
     </div>

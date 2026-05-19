@@ -1,34 +1,39 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-playfair);
 
-  --color-sidebar: #0d1117;
-  --color-sidebar-hover: #1c2128;
-  --color-sidebar-active: #2563eb;
-  --color-sidebar-text: #8b949e;
-  --color-sidebar-text-active: #ffffff;
-  --color-header: #0d1117;
-  --color-brand: #2563eb;
-  --color-brand-hover: #1d4ed8;
-
+  /* Wealthsimple-inspired palette */
+  --color-bg: #faf9f7;
   --color-surface: #ffffff;
-  --color-surface-2: #f6f8fa;
-  --color-border: #e5e7eb;
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-success: #059669;
-  --color-warning: #d97706;
-  --color-danger: #dc2626;
+  --color-surface-2: #f3f2ef;
+  --color-border: #e8e6e1;
+
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #5c5c5c;
+  --color-text-muted: #9a9a9a;
+
+  --color-sidebar: #1c1c1e;
+  --color-sidebar-hover: #2c2c2e;
+  --color-sidebar-active: #3a3a3c;
+
+  --color-brand: #1a1a1a;
+  --color-brand-hover: #2c2c2c;
+  --color-accent: #c9964c;       /* warm amber — used sparingly */
+  --color-accent-light: #fdf3e3;
+
+  --color-success: #2d6a4f;
+  --color-success-bg: #e9f5f0;
+  --color-warning: #c9964c;
+  --color-warning-bg: #fdf3e3;
+  --color-danger: #b83535;
+  --color-danger-bg: #fde8e8;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html,
-body {
+html, body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -36,48 +41,87 @@ body {
 }
 
 body {
-  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f6f8fa;
-  color: #111827;
+  font-family: var(--font-dm-sans), 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
   font-size: 13px;
   line-height: 1.5;
+  letter-spacing: 0.01em;
 }
 
-/* Compact inputs */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  opacity: 0.4;
+/* Serif headings (Playfair Display) */
+.font-serif {
+  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
 }
 
-input[type="range"] {
-  accent-color: #2563eb;
+/* 3D button effect */
+.btn-3d {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
   cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  border: none;
+  outline: none;
+  user-select: none;
+}
+
+.btn-3d:active {
+  transform: translateY(2px);
+}
+
+.btn-primary-3d {
+  background: #1a1a1a;
+  color: #ffffff;
+  box-shadow: 0 4px 0 #000000, 0 1px 3px rgba(0,0,0,0.2);
+  padding: 9px 18px;
+}
+.btn-primary-3d:hover {
+  background: #2c2c2c;
+}
+.btn-primary-3d:active {
+  box-shadow: 0 1px 0 #000000, 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.btn-secondary-3d {
+  background: #ffffff;
+  color: #1a1a1a;
+  box-shadow: 0 4px 0 #b0a090, 0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid #e0ddd8;
+  padding: 9px 18px;
+}
+.btn-secondary-3d:hover {
+  background: #f7f6f3;
+}
+.btn-secondary-3d:active {
+  box-shadow: 0 1px 0 #b0a090, 0 1px 2px rgba(0,0,0,0.1);
 }
 
 /* Scrollable panels */
 .panel-scroll {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #d1d5db transparent;
+  scrollbar-color: #d1cec8 transparent;
 }
-.panel-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-.panel-scroll::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
-}
+.panel-scroll::-webkit-scrollbar { width: 4px; }
+.panel-scroll::-webkit-scrollbar-thumb { background: #d1cec8; border-radius: 4px; }
 
-/* Compact table */
-table {
-  border-collapse: collapse;
-  width: 100%;
+/* Compact inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { opacity: 0.4; }
+
+input[type="range"] {
+  accent-color: #1a1a1a;
+  cursor: pointer;
 }
 
 /* Tooltip */
-.tooltip {
-  position: relative;
-}
+.tooltip { position: relative; }
 .tooltip-content {
   display: none;
   position: absolute;
@@ -85,26 +129,22 @@ table {
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: #1f2937;
-  color: #f9fafb;
+  background: #1a1a1a;
+  color: #f9f9f9;
   font-size: 11px;
-  line-height: 1.4;
-  padding: 6px 10px;
+  line-height: 1.5;
+  padding: 7px 11px;
   border-radius: 6px;
-  white-space: nowrap;
-  max-width: 260px;
   white-space: normal;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  max-width: 240px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  font-family: var(--font-dm-sans), sans-serif;
 }
-.tooltip:hover .tooltip-content {
-  display: block;
-}
+.tooltip:hover .tooltip-content { display: block; }
 
-/* Recharts overrides */
-.recharts-cartesian-axis-tick text {
-  font-size: 11px;
-  fill: #6b7280;
-}
-.recharts-legend-item-text {
-  font-size: 11px !important;
-}
+/* Tables */
+table { border-collapse: collapse; width: 100%; }
+
+/* Recharts */
+.recharts-cartesian-axis-tick text { font-size: 11px; fill: #9a9a9a; }
+.recharts-legend-item-text { font-size: 11px !important; }

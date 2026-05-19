@@ -20,7 +20,7 @@ export default function AppShell() {
   const [isRunning, setIsRunning] = useState(false)
   const [lastRun, setLastRun] = useState<string | null>(null)
 
-  const handleRunSimulation = useCallback(() => {
+  const handleRunAnalysis = useCallback(() => {
     setIsRunning(true)
     setTimeout(() => {
       try {
@@ -31,16 +31,16 @@ export default function AppShell() {
         )
         setActiveSection('projections')
       } catch (e) {
-        console.error('Simulation error:', e)
+        console.error('Analysis error:', e)
       } finally {
         setIsRunning(false)
       }
     }, 50)
   }, [inputs])
 
-  const handleSavePdf = useCallback(async () => {
+  const handleDownloadResults = useCallback(async () => {
     if (!results) {
-      alert('Run a simulation first to generate a PDF report.')
+      alert('Run an analysis first to generate a PDF report.')
       return
     }
     try {
@@ -52,18 +52,20 @@ export default function AppShell() {
   }, [inputs, results])
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#f6f8fa' }}>
-      <Sidebar activeSection={activeSection} onNavigate={setActiveSection} />
+    <div className="flex h-screen overflow-hidden" style={{ background: '#faf9f7' }}>
+      <Sidebar
+        activeSection={activeSection}
+        onNavigate={setActiveSection}
+        onRunAnalysis={handleRunAnalysis}
+        onDownloadResults={handleDownloadResults}
+        isRunning={isRunning}
+        hasResults={results !== null}
+      />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <Header
-          onRunSimulation={handleRunSimulation}
-          onSavePdf={handleSavePdf}
-          isRunning={isRunning}
-          lastRun={lastRun}
-        />
+        <Header lastRun={lastRun} />
 
-        <main className="flex-1 overflow-hidden" style={{ background: '#f6f8fa' }}>
+        <main className="flex-1 overflow-hidden" style={{ background: '#faf9f7' }}>
           {activeSection === 'inputs' && (
             <InputsSection
               inputs={inputs}
@@ -76,14 +78,14 @@ export default function AppShell() {
             <ProjectionsSection
               results={results}
               inputs={inputs}
-              onRunSimulation={handleRunSimulation}
+              onRunSimulation={handleRunAnalysis}
             />
           )}
           {activeSection === 'cashflow' && (
             <CashFlowSection
               results={results}
               inputs={inputs}
-              onRunSimulation={handleRunSimulation}
+              onRunSimulation={handleRunAnalysis}
             />
           )}
           {activeSection === 'release-notes' && <ReleaseNotesSection />}

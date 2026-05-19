@@ -47,8 +47,13 @@ export default function ReleaseNotesSection() {
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
       <div className="px-5 py-4 shrink-0 border-b" style={{ borderColor: '#e5e7eb', background: '#fff' }}>
-        <h2 className="text-sm font-semibold" style={{ color: '#111827' }}>Release Notes</h2>
-        <p className="text-[11px]" style={{ color: '#6b7280' }}>Nu Vista Analytics · Retirement Forecast Trajectory Engine</p>
+        <h2
+          className="text-sm font-semibold font-serif"
+          style={{ color: '#1a1a1a', fontFamily: 'var(--font-playfair), Georgia, serif' }}
+        >
+          Version Control
+        </h2>
+        <p className="text-[11px]" style={{ color: '#9a9a9a' }}>Nu Vista Analytics · Retirement Planner · Change History</p>
       </div>
 
       <div className="flex-1 overflow-y-auto panel-scroll px-5 py-4 flex flex-col gap-5">

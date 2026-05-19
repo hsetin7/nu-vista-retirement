@@ -1,6 +1,6 @@
 export interface Person {
   name: string
-  birthYear: number
+  currentAge: number
   retirementAge: number
   lifeExpectancy: number
   currentIncome: number

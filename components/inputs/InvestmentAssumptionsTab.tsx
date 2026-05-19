@@ -105,29 +105,29 @@ export default function InvestmentAssumptionsTab({ inputs, onChange }: Props) {
             label="Equity"
             value={a.equityPct}
             min={0} max={100} step={5} suffix="%"
-            color="#2563eb"
+            color="#1a1a1a"
             onChange={(v) => update({ equityPct: v })}
           />
           <SliderRow
             label="Bonds"
             value={a.bondPct}
             min={0} max={100} step={5} suffix="%"
-            color="#059669"
+            color="#5c5c5c"
             onChange={(v) => update({ bondPct: v })}
           />
           <SliderRow
             label="Cash / HISA"
             value={a.cashPct}
             min={0} max={100} step={5} suffix="%"
-            color="#d97706"
+            color="#c9964c"
             onChange={(v) => update({ cashPct: v })}
           />
 
           {/* Allocation bar */}
           <div className="h-3 rounded-full overflow-hidden flex">
-            <div style={{ width: `${a.equityPct}%`, background: '#2563eb' }} />
-            <div style={{ width: `${a.bondPct}%`, background: '#059669' }} />
-            <div style={{ width: `${a.cashPct}%`, background: '#d97706' }} />
+            <div style={{ width: `${a.equityPct}%`, background: '#1a1a1a' }} />
+            <div style={{ width: `${a.bondPct}%`, background: '#5c5c5c' }} />
+            <div style={{ width: `${a.cashPct}%`, background: '#c9964c' }} />
           </div>
 
           <div

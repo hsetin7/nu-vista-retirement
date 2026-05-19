@@ -1,15 +1,13 @@
 import type { RetirementInputs } from '@/types/retirement'
 
-const currentYear = new Date().getFullYear()
-
 export const DEFAULT_INPUTS: RetirementInputs = {
   person: {
     name: '',
-    birthYear: currentYear - 40,
+    currentAge: 40,
     retirementAge: 65,
     lifeExpectancy: 90,
     currentIncome: 0,
-    cppContributionYears: 20,
+    cppContributionYears: 38,
   },
   desiredRetirementIncome: 0,
   savings: {
