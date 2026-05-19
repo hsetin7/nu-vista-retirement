@@ -4,14 +4,23 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  --color-sidebar: #111827;
-  --color-sidebar-hover: #1f2937;
+  --color-sidebar: #0d1117;
+  --color-sidebar-hover: #1c2128;
   --color-sidebar-active: #2563eb;
-  --color-sidebar-text: #9ca3af;
+  --color-sidebar-text: #8b949e;
   --color-sidebar-text-active: #ffffff;
-  --color-header: #111827;
+  --color-header: #0d1117;
   --color-brand: #2563eb;
   --color-brand-hover: #1d4ed8;
+
+  --color-surface: #ffffff;
+  --color-surface-2: #f6f8fa;
+  --color-border: #e5e7eb;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
 }
 
 * {
@@ -23,19 +32,79 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 body {
-  font-family: var(--font-geist-sans), Arial, sans-serif;
-  background: #f1f5f9;
-  color: #0f172a;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f6f8fa;
+  color: #111827;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
+/* Compact inputs */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 input[type="range"] {
   accent-color: #2563eb;
+  cursor: pointer;
+}
+
+/* Scrollable panels */
+.panel-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+.panel-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.panel-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+/* Compact table */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+/* Tooltip */
+.tooltip {
+  position: relative;
+}
+.tooltip-content {
+  display: none;
+  position: absolute;
+  z-index: 50;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: #f9fafb;
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  max-width: 260px;
+  white-space: normal;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+.tooltip:hover .tooltip-content {
+  display: block;
+}
+
+/* Recharts overrides */
+.recharts-cartesian-axis-tick text {
+  font-size: 11px;
+  fill: #6b7280;
+}
+.recharts-legend-item-text {
+  font-size: 11px !important;
 }

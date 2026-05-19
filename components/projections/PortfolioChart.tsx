@@ -1,94 +1,113 @@
 'use client'
 
 import {
-  BarChart,
-  Bar,
+  ResponsiveContainer,
+  ComposedChart,
+  Area,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
-  ResponsiveContainer,
   ReferenceLine,
 } from 'recharts'
-import type { YearlyProjection } from '@/types/retirement'
+import type { ProjectionResults, RetirementInputs } from '@/types/retirement'
+import { formatCurrency } from '@/lib/utils'
 
 interface Props {
-  yearly: YearlyProjection[]
-  retirementAge: number
+  results: ProjectionResults
+  inputs: RetirementInputs
 }
 
-function formatYAxis(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`
-  return `$${value}`
+function formatYAxis(v: number): string {
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
+  if (v >= 1_000) return `$${(v / 1_000).toFixed(0)}K`
+  return `$${v}`
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null
-  const total = payload.reduce((s: number, p: any) => s + (p.value || 0), 0)
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm">
-      <p className="font-semibold text-gray-800 mb-2">Age {label}</p>
-      {payload.map((p: any) => (
-        <div key={p.dataKey} className="flex items-center gap-2 text-gray-600">
-          <span className="w-2.5 h-2.5 rounded-sm" style={{ background: p.fill }} />
-          <span>{p.name}:</span>
-          <span className="font-medium text-gray-900">{formatYAxis(p.value)}</span>
-        </div>
-      ))}
-      <div className="border-t border-gray-100 mt-2 pt-2 flex justify-between font-semibold text-gray-800">
-        <span>Total</span>
-        <span>{formatYAxis(total)}</span>
-      </div>
-    </div>
-  )
-}
+export default function PortfolioChart({ results, inputs }: Props) {
+  const { monteCarlo, yearly } = results
+  const retirementYear = yearly.find((r) => r.phase === 'retirement')?.year
 
-export default function PortfolioChart({ yearly, retirementAge }: Props) {
-  const data = yearly.map((r) => ({
-    age: r.age,
-    RRSP: Math.round(r.rrspBalance),
-    TFSA: Math.round(r.tfsaBalance),
-    'Non-Reg': Math.round(r.nonRegBalance),
+  const data = monteCarlo.years.map((year, i) => ({
+    year,
+    bandLow: monteCarlo.p25[i],
+    bandHigh: monteCarlo.p75[i],
+    p50: monteCarlo.p50[i],
   }))
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 className="font-semibold text-gray-800 mb-1">Portfolio Value Over Time</h3>
-      <p className="text-xs text-gray-500 mb-4">Total balance by account type at each age</p>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+    <div className="rounded-lg border p-4" style={{ borderColor: '#e5e7eb', background: '#fff' }}>
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold" style={{ color: '#111827' }}>
+          Portfolio Balance Trajectory
+        </h3>
+        <p className="text-[11px]" style={{ color: '#6b7280' }}>
+          P25–P75 band with median · 1,000 Monte Carlo simulations
+        </p>
+      </div>
+
+      <ResponsiveContainer width="100%" height={220}>
+        <ComposedChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 10 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
           <XAxis
-            dataKey="age"
-            tick={{ fontSize: 11, fill: '#6b7280' }}
+            dataKey="year"
+            tick={{ fontSize: 10, fill: '#9ca3af' }}
             tickLine={false}
             axisLine={false}
+            interval="preserveStartEnd"
           />
           <YAxis
             tickFormatter={formatYAxis}
-            tick={{ fontSize: 11, fill: '#6b7280' }}
+            tick={{ fontSize: 10, fill: '#9ca3af' }}
             tickLine={false}
             axisLine={false}
-            width={60}
+            width={52}
           />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend
-            wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }}
-            iconType="square"
+          <Tooltip
+            formatter={(value) => [formatCurrency(Number(value)), '']}
+            labelFormatter={(label) => `Year ${label}`}
+            contentStyle={{
+              fontSize: 11,
+              border: '1px solid #e5e7eb',
+              borderRadius: 6,
+              background: '#fff',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            }}
           />
-          <ReferenceLine
-            x={retirementAge}
-            stroke="#2563eb"
-            strokeDasharray="4 3"
-            label={{ value: 'Retire', position: 'top', fontSize: 11, fill: '#2563eb' }}
-          />
-          <Bar dataKey="RRSP" stackId="a" fill="#2563eb" radius={[0, 0, 0, 0]} />
-          <Bar dataKey="TFSA" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
-          <Bar dataKey="Non-Reg" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-        </BarChart>
+          {/* P25–P75 band: stack high on top of low, then paint low white */}
+          <Area type="monotone" dataKey="bandHigh" stroke="none" fill="#dbeafe" fillOpacity={1} legendType="none" name="P75" />
+          <Area type="monotone" dataKey="bandLow" stroke="none" fill="#f6f8fa" fillOpacity={1} legendType="none" name="P25" />
+          {/* Median line */}
+          <Line type="monotone" dataKey="p50" stroke="#2563eb" strokeWidth={2} dot={false} name="Base Case (P50)" />
+          {retirementYear && (
+            <ReferenceLine
+              x={retirementYear}
+              stroke="#d97706"
+              strokeDasharray="4 4"
+              strokeWidth={1.5}
+              label={{ value: 'Retire', position: 'insideTopLeft', fontSize: 9, fill: '#d97706', dy: -2 }}
+            />
+          )}
+        </ComposedChart>
       </ResponsiveContainer>
+
+      <div className="flex items-center gap-4 mt-2">
+        <div className="flex items-center gap-1.5">
+          <div className="w-7 h-0.5 rounded" style={{ background: '#2563eb' }} />
+          <span className="text-[10px]" style={{ color: '#6b7280' }}>Base Case (P50)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-7 h-3 rounded" style={{ background: '#dbeafe' }} />
+          <span className="text-[10px]" style={{ color: '#6b7280' }}>P25–P75 range</span>
+        </div>
+        {retirementYear && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 border-t border-dashed" style={{ borderColor: '#d97706' }} />
+            <span className="text-[10px]" style={{ color: '#6b7280' }}>Retirement</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

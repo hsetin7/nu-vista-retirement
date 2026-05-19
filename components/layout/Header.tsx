@@ -1,54 +1,50 @@
 'use client'
 
-import { Play, Save, Upload } from 'lucide-react'
+import { Play, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
   onRunSimulation: () => void
+  onSavePdf: () => void
   isRunning: boolean
-  hasResults: boolean
   lastRun: string | null
 }
 
-export default function Header({ onRunSimulation, isRunning, hasResults, lastRun }: HeaderProps) {
+export default function Header({ onRunSimulation, onSavePdf, isRunning, lastRun }: HeaderProps) {
   return (
-    <header className="flex items-center justify-between px-6 py-3 bg-[#111827] border-b border-white/10 shrink-0">
-      <div className="flex items-center gap-3">
-        <span className="text-white font-semibold text-sm">Retirement Planner</span>
-        <span className="text-gray-500 text-xs">·</span>
-        <span className="text-gray-400 text-xs">
-          {lastRun ? `Last run: ${lastRun}` : 'Last run: Never run'}
+    <header
+      className="flex items-center justify-between px-5 py-2.5 shrink-0 border-b border-white/10"
+      style={{ background: '#0d1117' }}
+    >
+      <div className="flex items-center gap-2.5">
+        <span className="text-white font-semibold text-sm">Retirement Forecast</span>
+        <span style={{ color: '#374151' }}>·</span>
+        <span className="text-xs" style={{ color: '#6b7280' }}>
+          {lastRun ? `Last run: ${lastRun}` : 'Run simulation to see projections'}
         </span>
       </div>
 
       <div className="flex items-center gap-2">
         <button
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-white/20 text-gray-300 text-xs font-medium hover:bg-white/10 transition-colors"
-          title="Save inputs"
+          onClick={onSavePdf}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border border-white/20 transition-colors hover:bg-white/10"
+          style={{ color: '#d1d5db' }}
+          title="Download PDF report"
         >
-          <Save size={13} />
-          Save
-        </button>
-
-        <button
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-white/20 text-gray-300 text-xs font-medium hover:bg-white/10 transition-colors"
-          title="Import saved inputs"
-        >
-          <Upload size={13} />
-          Import
+          <Download size={12} />
+          Save PDF
         </button>
 
         <button
           onClick={onRunSimulation}
           disabled={isRunning}
           className={cn(
-            'flex items-center gap-1.5 px-4 py-1.5 rounded-md text-white text-xs font-semibold transition-colors',
-            isRunning
-              ? 'bg-blue-700 cursor-not-allowed'
-              : 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700'
+            'flex items-center gap-1.5 px-4 py-1.5 rounded text-white text-xs font-semibold transition-colors',
+            isRunning ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90'
           )}
+          style={{ background: '#2563eb' }}
         >
-          <Play size={13} fill="currentColor" />
+          <Play size={12} fill="currentColor" />
           {isRunning ? 'Running…' : 'Run Simulation'}
         </button>
       </div>

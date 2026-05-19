@@ -1,230 +1,241 @@
-import type { RetirementInputs, YearlyProjection, ProjectionResults } from '@/types/retirement'
-import { calcCombinedTax, effectiveTaxRate } from './canadian-tax'
+import type { RetirementInputs, YearlyProjection, ProjectionResults, MonteCarloResult } from '@/types/retirement'
+import { calcCombinedTax } from './canadian-tax'
 import { estimateCppMonthly, calcOasMonthly } from './cpp-oas'
 import { CURRENT_YEAR } from './utils'
 
-function blendedReturn(a: ReturnType<typeof getBlendedReturn>): number {
-  return a
+function getBlendedReturn(a: RetirementInputs['assumptions']): number {
+  return (
+    (a.equityPct / 100) * (a.equityMeanReturn / 100) +
+    (a.bondPct / 100) * (a.bondMeanReturn / 100) +
+    (a.cashPct / 100) * (a.cashReturn / 100)
+  )
 }
 
-function getBlendedReturn(assumptions: RetirementInputs['assumptions']): number {
-  const { equityPct, bondPct, cashPct, equityMeanReturn, bondMeanReturn, cashReturn } = assumptions
+function getBlendedVolatility(a: RetirementInputs['assumptions']): number {
   return (
-    (equityPct / 100) * equityMeanReturn +
-    (bondPct / 100) * bondMeanReturn +
-    (cashPct / 100) * cashReturn
-  ) / 100
+    (a.equityPct / 100) * (a.equityVolatility / 100) +
+    (a.bondPct / 100) * (a.bondVolatility / 100) +
+    (a.cashPct / 100) * 0.005
+  )
 }
 
-function getBlendedVolatility(assumptions: RetirementInputs['assumptions']): number {
-  const { equityPct, bondPct, cashPct, equityVolatility, bondVolatility } = assumptions
-  // Simplified: weighted average volatility (ignores correlation for deterministic path)
-  return (
-    (equityPct / 100) * equityVolatility +
-    (bondPct / 100) * bondVolatility +
-    (cashPct / 100) * 0.5
-  ) / 100
+function boxMullerRandom(): number {
+  const u1 = Math.random()
+  const u2 = Math.random()
+  return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
 }
 
 export function runProjection(inputs: RetirementInputs): ProjectionResults {
-  const { person1, savings, income, expenses, assumptions } = inputs
-  const currentAge = CURRENT_YEAR - person1.birthYear
-  const retirementYear = CURRENT_YEAR + (person1.retirementAge - currentAge)
-  const endYear = CURRENT_YEAR + (person1.lifeExpectancy - currentAge)
+  const { person, savings, assumptions, desiredRetirementIncome } = inputs
+  const currentAge = CURRENT_YEAR - person.birthYear
   const inflation = assumptions.inflationRate / 100
   const nominalReturn = getBlendedReturn(assumptions)
-  const realReturn = (1 + nominalReturn) / (1 + inflation) - 1
 
   const cppMonthly = estimateCppMonthly(
-    income.employmentIncome,
-    income.cppContributionYears,
-    income.cppStartAge
+    person.currentIncome,
+    person.cppContributionYears,
+    person.retirementAge
   )
-  const pensionMonthly = savings.pensionMonthly
+  const oasMonthly = calcOasMonthly(cppMonthly * 12, 65)
 
   let rrsp = savings.rrspBalance
   let tfsa = savings.tfsaBalance
   let nonReg = savings.nonRegBalance
 
   const yearly: YearlyProjection[] = []
+  let totalContributed = savings.rrspBalance + savings.tfsaBalance + savings.nonRegBalance
 
-  for (let year = CURRENT_YEAR; year <= endYear; year++) {
-    const age = currentAge + (year - CURRENT_YEAR)
-    const isRetired = age >= person1.retirementAge
-    const yearsFromNow = year - CURRENT_YEAR
+  const startAge = Math.max(currentAge, 18)
 
-    // Inflation factor for expenses
-    const inflationFactor = Math.pow(1 + inflation, yearsFromNow)
+  for (let age = startAge; age <= person.lifeExpectancy; age++) {
+    const year = CURRENT_YEAR + (age - currentAge)
+    const phase: 'accumulation' | 'retirement' = age < person.retirementAge ? 'accumulation' : 'retirement'
+    const yearsFromRetirement = Math.max(0, age - person.retirementAge)
+    const inflationFactor = Math.pow(1 + inflation, yearsFromRetirement)
 
-    if (!isRetired) {
-      // Accumulation phase: grow and contribute
+    let employmentIncome = 0
+    let cppIncome = 0
+    let oasIncome = 0
+    let pensionIncome = 0
+    let taxPaid = 0
+    let expenses = 0
+    let rrspContrib = 0
+    let tfsaContrib = 0
+    let nonRegContrib = 0
+    let rrspWithdrawal = 0
+    let tfsaWithdrawal = 0
+    let nonRegWithdrawal = 0
+
+    if (phase === 'accumulation') {
+      employmentIncome = person.currentIncome
+
       rrsp = rrsp * (1 + nominalReturn) + savings.rrspAnnualContribution
       tfsa = tfsa * (1 + nominalReturn) + savings.tfsaAnnualContribution
-      nonReg = nonReg * (1 + nominalReturn)
+      nonReg = nonReg * (1 + nominalReturn) + savings.nonRegAnnualContribution
 
-      const totalExpenses = expenses.categories.reduce((s, c) => s + c.current, 0) * inflationFactor
+      rrspContrib = savings.rrspAnnualContribution
+      tfsaContrib = savings.tfsaAnnualContribution
+      nonRegContrib = savings.nonRegAnnualContribution
 
-      yearly.push({
-        year,
-        age,
-        rrspBalance: rrsp,
-        tfsaBalance: tfsa,
-        nonRegBalance: nonReg,
-        totalBalance: rrsp + tfsa + nonReg,
-        rrspWithdrawal: 0,
-        tfsaWithdrawal: 0,
-        cppIncome: 0,
-        oasIncome: 0,
-        pensionIncome: 0,
-        totalIncome: income.employmentIncome + income.otherIncome,
-        taxPaid: calcCombinedTax(income.employmentIncome + income.otherIncome, savings.rrspAnnualContribution),
-        totalExpenses,
-      })
+      totalContributed +=
+        savings.rrspAnnualContribution +
+        savings.tfsaAnnualContribution +
+        savings.nonRegAnnualContribution
+
+      const taxableIncome = Math.max(0, employmentIncome - savings.rrspAnnualContribution)
+      taxPaid = calcCombinedTax(taxableIncome)
+      expenses = 0
     } else {
-      // Decumulation phase: withdraw to meet expenses
-      const targetExpenses = expenses.categories.reduce((s, c) => s + c.retirement, 0) * inflationFactor
+      // Decumulation
+      const targetSpend = desiredRetirementIncome * inflationFactor
 
-      const cppAnnual = age >= income.cppStartAge ? cppMonthly * 12 * inflationFactor : 0
-      const pensionAnnual = pensionMonthly * 12 * inflationFactor
+      cppIncome = cppMonthly * 12 * inflationFactor
+      oasIncome = age >= 65 ? oasMonthly * 12 * inflationFactor : 0
+      pensionIncome =
+        savings.otherPostRetirementMonthly > 0 && age >= savings.otherPostRetirementStartAge
+          ? savings.otherPostRetirementMonthly * 12 * inflationFactor
+          : 0
 
-      // Estimate OAS (check clawback later with known income)
-      const preOasIncome = cppAnnual + pensionAnnual
-      const oasAnnual = calcOasMonthly(preOasIncome, age) * 12 * inflationFactor
+      const guaranteedIncome = cppIncome + oasIncome + pensionIncome
+      const shortfall = Math.max(0, targetSpend - guaranteedIncome)
 
-      const governmentIncome = cppAnnual + oasAnnual + pensionAnnual
-      const portfolioNeeded = Math.max(0, targetExpenses - governmentIncome)
-
-      // Withdrawal strategy: RRSP first (to reduce future required minimum withdrawals), then TFSA, then non-reg
-      let rrspWithdrawal = 0
-      let tfsaWithdrawal = 0
-
-      // Grow accounts by return first
+      // Grow first, then withdraw
       rrsp = rrsp * (1 + nominalReturn)
       tfsa = tfsa * (1 + nominalReturn)
       nonReg = nonReg * (1 + nominalReturn)
 
-      let remaining = portfolioNeeded
+      let remaining = shortfall
+      // RRSP first (gross up for tax ~30%)
       if (rrsp > 0 && remaining > 0) {
-        rrspWithdrawal = Math.min(rrsp, remaining * 1.3) // withdraw a bit more to account for tax
+        const gross = Math.min(rrsp, remaining * 1.35)
+        rrspWithdrawal = gross
         rrsp = Math.max(0, rrsp - rrspWithdrawal)
-        remaining = Math.max(0, remaining - rrspWithdrawal * 0.7)
+        remaining = Math.max(0, remaining - rrspWithdrawal * 0.74)
       }
+      // TFSA next (tax-free)
       if (tfsa > 0 && remaining > 0) {
         tfsaWithdrawal = Math.min(tfsa, remaining)
         tfsa = Math.max(0, tfsa - tfsaWithdrawal)
-        remaining = 0
+        remaining = Math.max(0, remaining - tfsaWithdrawal)
+      }
+      // Non-reg last
+      if (nonReg > 0 && remaining > 0) {
+        nonRegWithdrawal = Math.min(nonReg, remaining)
+        nonReg = Math.max(0, nonReg - nonRegWithdrawal)
       }
 
-      const grossIncome = governmentIncome + rrspWithdrawal
-      const tax = calcCombinedTax(grossIncome)
-
-      yearly.push({
-        year,
-        age,
-        rrspBalance: rrsp,
-        tfsaBalance: tfsa,
-        nonRegBalance: nonReg,
-        totalBalance: rrsp + tfsa + nonReg,
-        rrspWithdrawal,
-        tfsaWithdrawal,
-        cppIncome: cppAnnual,
-        oasIncome: oasAnnual,
-        pensionIncome: pensionAnnual,
-        totalIncome: grossIncome,
-        taxPaid: tax,
-        totalExpenses: targetExpenses,
-      })
+      const grossIncome = guaranteedIncome + rrspWithdrawal + nonRegWithdrawal * 0.5
+      taxPaid = calcCombinedTax(Math.max(0, grossIncome))
+      expenses = targetSpend
     }
+
+    const totalGrossIncome = employmentIncome + cppIncome + oasIncome + pensionIncome + rrspWithdrawal + tfsaWithdrawal + nonRegWithdrawal
+    const totalNetIncome = Math.max(0, totalGrossIncome - taxPaid)
+    const totalPortfolio = Math.max(0, rrsp) + Math.max(0, tfsa) + Math.max(0, nonReg)
+
+    const netCashFlow =
+      phase === 'accumulation'
+        ? employmentIncome - taxPaid - rrspContrib - tfsaContrib - nonRegContrib
+        : totalNetIncome - expenses
+
+    yearly.push({
+      year,
+      age,
+      phase,
+      employmentIncome,
+      cppIncome,
+      oasIncome,
+      pensionIncome,
+      totalGrossIncome,
+      taxPaid,
+      totalNetIncome,
+      expenses,
+      netCashFlow,
+      rrspBalance: Math.max(0, rrsp),
+      tfsaBalance: Math.max(0, tfsa),
+      nonRegBalance: Math.max(0, nonReg),
+      totalPortfolio,
+      rrspContribution: rrspContrib,
+      tfsaContribution: tfsaContrib,
+      nonRegContribution: nonRegContrib,
+      rrspWithdrawal,
+      tfsaWithdrawal,
+      nonRegWithdrawal,
+    })
   }
 
-  // Find retirement year data
-  const retirementRow = yearly.find((r) => r.age === person1.retirementAge)
-  const retirementPortfolio = retirementRow?.totalBalance ?? 0
+  const retirementRow = yearly.find((r) => r.age === person.retirementAge)
+  const retirementPortfolio = retirementRow?.totalPortfolio ?? 0
 
-  // Portfolio runway: years until balance hits 0
-  let runwayYears = 0
-  for (const row of yearly) {
-    if (row.age >= person1.retirementAge && row.totalBalance > 0) {
-      runwayYears++
-    }
-  }
+  const retirementRows = yearly.filter((r) => r.phase === 'retirement')
+  const lastPositiveRow = [...retirementRows].reverse().find((r) => r.totalPortfolio > 0)
+  const portfolioRunwayYears = lastPositiveRow
+    ? lastPositiveRow.age - person.retirementAge + 1
+    : 0
 
-  const retirementRows = yearly.filter((r) => r.age >= person1.retirementAge)
+  const meetsGoal = portfolioRunwayYears >= person.lifeExpectancy - person.retirementAge
+
   const avgMonthlyIncome =
     retirementRows.length > 0
-      ? retirementRows.reduce((s, r) => s + r.totalIncome, 0) / retirementRows.length / 12
+      ? retirementRows.reduce((s, r) => s + r.totalGrossIncome, 0) / retirementRows.length / 12
       : 0
 
-  const avgTaxRate =
-    retirementRows.length > 0
-      ? retirementRows.reduce((s, r) => s + (r.totalIncome > 0 ? r.taxPaid / r.totalIncome : 0), 0) /
-        retirementRows.length
-      : 0
-
-  const monte = runMonteCarlo(inputs, 1000)
+  const monteCarlo = runMonteCarlo(inputs)
 
   return {
     yearly,
-    monteCarlo: monte,
+    monteCarlo,
     retirementPortfolio,
     monthlyRetirementIncome: avgMonthlyIncome,
-    portfolioRunwayYears: runwayYears,
-    effectiveTaxRate: avgTaxRate,
+    portfolioRunwayYears,
     cppMonthly,
-    oasMonthly: calcOasMonthly(cppMonthly * 12, 65),
+    oasMonthly,
+    totalContributed,
+    meetsGoal,
   }
 }
 
-function runMonteCarlo(inputs: RetirementInputs, runs: number) {
-  const { person1, savings, income, expenses, assumptions } = inputs
-  const currentAge = CURRENT_YEAR - person1.birthYear
-  const yearsToRetirement = person1.retirementAge - currentAge
-  const yearsInRetirement = person1.lifeExpectancy - person1.retirementAge
+function runMonteCarlo(inputs: RetirementInputs, runs = 1000): MonteCarloResult {
+  const { person, savings, assumptions, desiredRetirementIncome } = inputs
+  const currentAge = CURRENT_YEAR - person.birthYear
+  const yearsToRetirement = Math.max(0, person.retirementAge - currentAge)
+  const yearsInRetirement = Math.max(1, person.lifeExpectancy - person.retirementAge)
   const totalYears = yearsToRetirement + yearsInRetirement
 
   const nominalReturn = getBlendedReturn(assumptions)
   const volatility = getBlendedVolatility(assumptions)
   const inflation = assumptions.inflationRate / 100
 
-  const allEndBalances: number[][] = Array.from({ length: totalYears }, () => [])
+  const cppAnnual = estimateCppMonthly(person.currentIncome, person.cppContributionYears, person.retirementAge) * 12
+  const oasAnnual = calcOasMonthly(cppAnnual, 65) * 12
+  const pensionAnnual = savings.otherPostRetirementMonthly * 12
+  const govtIncome = cppAnnual + oasAnnual + pensionAnnual
+
+  const allBalances: number[][] = Array.from({ length: totalYears }, () => [])
   let successCount = 0
 
   for (let run = 0; run < runs; run++) {
-    let portfolio =
-      savings.rrspBalance + savings.tfsaBalance + savings.nonRegBalance
-
-    const annualExpenses = expenses.categories.reduce((s, c) => s + c.retirement, 0)
-    const cppAnnual = estimateCppMonthly(income.employmentIncome, income.cppContributionYears, income.cppStartAge) * 12
-    const pensionAnnual = savings.pensionMonthly * 12
-    const oasAnnual = calcOasMonthly(cppAnnual + pensionAnnual, 65) * 12
-
+    let portfolio = savings.rrspBalance + savings.tfsaBalance + savings.nonRegBalance
     let succeeded = true
 
     for (let yr = 0; yr < totalYears; yr++) {
-      // Random return from normal distribution (Box-Muller)
-      const u1 = Math.random()
-      const u2 = Math.random()
-      const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
+      const z = boxMullerRandom()
       const annualReturn = nominalReturn + z * volatility
+      portfolio *= 1 + annualReturn
 
-      portfolio = portfolio * (1 + annualReturn)
-
-      if (yr >= yearsToRetirement) {
-        const inflFactor = Math.pow(1 + inflation, yr)
-        const govtIncome = (cppAnnual + oasAnnual + pensionAnnual) * inflFactor
-        const netWithdrawal = Math.max(0, annualExpenses * inflFactor - govtIncome)
-        portfolio -= netWithdrawal
-
-        // Also add annual contributions during accumulation
+      if (yr < yearsToRetirement) {
+        portfolio += savings.rrspAnnualContribution + savings.tfsaAnnualContribution + savings.nonRegAnnualContribution
       } else {
-        portfolio += savings.rrspAnnualContribution + savings.tfsaAnnualContribution
+        const inflFactor = Math.pow(1 + inflation, yr - yearsToRetirement)
+        const netWithdrawal = Math.max(0, desiredRetirementIncome * inflFactor - govtIncome * inflFactor)
+        portfolio -= netWithdrawal
+        if (portfolio < 0) {
+          portfolio = 0
+          if (yr === totalYears - 1) succeeded = false
+        }
       }
 
-      allEndBalances[yr].push(Math.max(0, portfolio))
-
-      if (yr === totalYears - 1 && portfolio <= 0) {
-        succeeded = false
-      }
+      allBalances[yr].push(Math.max(0, portfolio))
     }
 
     if (succeeded) successCount++
@@ -232,17 +243,19 @@ function runMonteCarlo(inputs: RetirementInputs, runs: number) {
 
   const years = Array.from({ length: totalYears }, (_, i) => CURRENT_YEAR + i)
 
-  const percentile = (arr: number[], p: number) => {
+  const pct = (arr: number[], p: number) => {
     const sorted = [...arr].sort((a, b) => a - b)
-    const idx = Math.floor((p / 100) * sorted.length)
-    return sorted[Math.min(idx, sorted.length - 1)]
+    const idx = Math.floor((p / 100) * (sorted.length - 1))
+    return sorted[idx] ?? 0
   }
 
   return {
     successRate: (successCount / runs) * 100,
     years,
-    p10: allEndBalances.map((yr) => percentile(yr, 10)),
-    p50: allEndBalances.map((yr) => percentile(yr, 50)),
-    p90: allEndBalances.map((yr) => percentile(yr, 90)),
+    p10: allBalances.map((yr) => pct(yr, 10)),
+    p25: allBalances.map((yr) => pct(yr, 25)),
+    p50: allBalances.map((yr) => pct(yr, 50)),
+    p75: allBalances.map((yr) => pct(yr, 75)),
+    p90: allBalances.map((yr) => pct(yr, 90)),
   }
 }
