@@ -68,9 +68,9 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
     if (phase === 'accumulation') {
       employmentIncome = person.currentIncome
 
-      rrsp = rrsp * (1 + nominalReturn) + savings.rrspAnnualContribution
-      tfsa = tfsa * (1 + nominalReturn) + savings.tfsaAnnualContribution
-      nonReg = nonReg * (1 + nominalReturn) + savings.nonRegAnnualContribution
+      rrsp = (rrsp + savings.rrspAnnualContribution) * (1 + nominalReturn)
+      tfsa = (tfsa + savings.tfsaAnnualContribution) * (1 + nominalReturn)
+      nonReg = (nonReg + savings.nonRegAnnualContribution) * (1 + nominalReturn)
 
       rrspContrib = savings.rrspAnnualContribution
       tfsaContrib = savings.tfsaAnnualContribution
