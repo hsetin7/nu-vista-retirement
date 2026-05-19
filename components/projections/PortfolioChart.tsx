@@ -42,7 +42,7 @@ export default function PortfolioChart({ results, inputs }: Props) {
         <h3 className="text-sm font-semibold" style={{ color: '#111827' }}>
           Portfolio Balance Trajectory
         </h3>
-        <p className="text-[11px]" style={{ color: '#6b7280' }}>
+        <p className="text-[12px]" style={{ color: '#6b7280' }}>
           P25–P75 band with median · 1,000 Monte Carlo simulations
         </p>
       </div>
@@ -52,14 +52,14 @@ export default function PortfolioChart({ results, inputs }: Props) {
           <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
           <XAxis
             dataKey="year"
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
+            tick={{ fontSize: 11, fill: '#9ca3af' }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
             tickFormatter={formatYAxis}
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
+            tick={{ fontSize: 11, fill: '#9ca3af' }}
             tickLine={false}
             axisLine={false}
             width={52}
@@ -68,7 +68,7 @@ export default function PortfolioChart({ results, inputs }: Props) {
             formatter={(value) => [formatCurrency(Number(value)), '']}
             labelFormatter={(label) => `Year ${label}`}
             contentStyle={{
-              fontSize: 11,
+              fontSize: 12,
               border: '1px solid #e5e7eb',
               borderRadius: 6,
               background: '#fff',
@@ -95,16 +95,16 @@ export default function PortfolioChart({ results, inputs }: Props) {
       <div className="flex items-center gap-4 mt-2">
         <div className="flex items-center gap-1.5">
           <div className="w-7 h-0.5 rounded" style={{ background: '#2563eb' }} />
-          <span className="text-[10px]" style={{ color: '#6b7280' }}>Base Case (P50)</span>
+          <span className="text-[11px]" style={{ color: '#6b7280' }}>Base Case (P50)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-7 h-3 rounded" style={{ background: '#dbeafe' }} />
-          <span className="text-[10px]" style={{ color: '#6b7280' }}>P25–P75 range</span>
+          <span className="text-[11px]" style={{ color: '#6b7280' }}>P25–P75 range</span>
         </div>
         {retirementYear && (
           <div className="flex items-center gap-1.5">
             <div className="w-4 border-t border-dashed" style={{ borderColor: '#d97706' }} />
-            <span className="text-[10px]" style={{ color: '#6b7280' }}>Retirement</span>
+            <span className="text-[11px]" style={{ color: '#6b7280' }}>Retirement</span>
           </div>
         )}
       </div>

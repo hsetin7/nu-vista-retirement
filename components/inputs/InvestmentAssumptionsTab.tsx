@@ -28,7 +28,7 @@ function SliderRow({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-xs w-28 shrink-0 font-medium" style={{ color: '#374151' }}>{label}</span>
+      <span className="text-[13px] w-28 shrink-0 font-medium" style={{ color: '#374151' }}>{label}</span>
       <input
         type="range"
         min={min}
@@ -39,7 +39,7 @@ function SliderRow({
         className="flex-1 h-1"
         style={{ accentColor: color || '#2563eb' }}
       />
-      <span className="text-xs font-semibold w-14 text-right" style={{ color: color || '#2563eb' }}>
+      <span className="text-[13px] font-semibold w-14 text-right" style={{ color: color || '#2563eb' }}>
         {value.toFixed(1)}{suffix}
       </span>
     </div>
@@ -59,7 +59,7 @@ function NumRow({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs" style={{ color: '#374151' }}>{label}</span>
+      <span className="text-[13px]" style={{ color: '#374151' }}>{label}</span>
       <div className="flex items-center gap-1">
         <input
           type="number"
@@ -152,7 +152,7 @@ export default function InvestmentAssumptionsTab({ inputs, onChange }: Props) {
       {/* RIGHT: Return & Inflation */}
       <SectionCard title="Return & Inflation Assumptions">
         <div className="flex flex-col gap-3">
-          <div className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: '#9ca3af' }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#9ca3af' }}>
             Equity
           </div>
           <NumRow label="Mean Annual Return" value={a.equityMeanReturn} onChange={(v) => update({ equityMeanReturn: v })} />
@@ -178,7 +178,7 @@ export default function InvestmentAssumptionsTab({ inputs, onChange }: Props) {
             </div>
           </div>
 
-          <p className="text-[10px] leading-relaxed mt-1" style={{ color: '#9ca3af' }}>
+          <p className="text-[11px] leading-relaxed mt-1" style={{ color: '#9ca3af' }}>
             Blended return = weighted average of all asset class returns. Volatility drives Monte Carlo simulation spread.
           </p>
         </div>

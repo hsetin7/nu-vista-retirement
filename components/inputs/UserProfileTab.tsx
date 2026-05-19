@@ -23,7 +23,7 @@ function formatWithCommas(n: number): string {
 function Label({ children, tooltip }: { children: React.ReactNode; tooltip?: string }) {
   return (
     <div className="flex items-center gap-1 mb-1">
-      <span className="text-[11px] font-medium" style={{ color: '#5c5c5c' }}>{children}</span>
+      <span className="text-[12px] font-medium" style={{ color: '#5c5c5c' }}>{children}</span>
       {tooltip && (
         <div className="tooltip">
           <HelpCircle size={11} style={{ color: '#b0aca6', cursor: 'help' }} />
@@ -57,7 +57,7 @@ function Input({
   return (
     <div className="relative flex items-center">
       {prefix && (
-        <span className="absolute left-2.5 text-xs pointer-events-none select-none" style={{ color: '#9a9a9a' }}>
+        <span className="absolute left-2.5 text-[13px] pointer-events-none select-none" style={{ color: '#9a9a9a' }}>
           {prefix}
         </span>
       )}
@@ -71,7 +71,7 @@ function Input({
         onChange={(e) =>
           onChange(type === 'number' ? (e.target.value === '' ? 0 : Number(e.target.value)) : e.target.value)
         }
-        className="w-full rounded-md border text-xs py-1.5 outline-none focus:ring-1 transition-shadow"
+        className="w-full rounded-md border text-[13px] py-1.5 outline-none focus:ring-1 transition-shadow"
         style={{
           paddingLeft: prefix ? '1.5rem' : '0.625rem',
           paddingRight: '0.625rem',
@@ -98,13 +98,13 @@ function DollarInput({
 }) {
   return (
     <div className="relative flex items-center">
-      <span className="absolute left-2.5 text-xs pointer-events-none select-none" style={{ color: '#9a9a9a' }}>$</span>
+      <span className="absolute left-2.5 text-[13px] pointer-events-none select-none" style={{ color: '#9a9a9a' }}>$</span>
       <input
         type="text"
         inputMode="numeric"
         defaultValue={formatWithCommas(value)}
         key={value} // re-mount when value changes externally
-        className="w-full rounded-md border text-xs py-1.5 outline-none transition-shadow"
+        className="w-full rounded-md border text-[13px] py-1.5 outline-none transition-shadow"
         style={{ paddingLeft: '1.25rem', paddingRight: '0.625rem', ...INPUT_STYLE }}
         onFocus={(e) => {
           e.target.style.borderColor = '#1a1a1a'
@@ -161,7 +161,7 @@ function SliderInput({
         inputMode="numeric"
         key={value}
         defaultValue={formatWithCommas(value)}
-        className="w-20 rounded-md border text-xs py-1 px-1.5 text-right outline-none"
+        className="w-20 rounded-md border text-[13px] py-1 px-1.5 text-right outline-none"
         style={{ borderColor: '#e8e6e1', background: '#ffffff', color: '#1a1a1a' }}
         onFocus={(e) => {
           e.target.style.borderColor = '#1a1a1a'
@@ -189,7 +189,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
       className="rounded-xl border p-4 flex flex-col gap-3 h-full"
       style={{ borderColor: '#e8e6e1', background: '#ffffff', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
     >
-      <h3 className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#9a9a9a' }}>
+      <h3 className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#9a9a9a' }}>
         {title}
       </h3>
       {children}
@@ -243,16 +243,16 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
 
         <div>
           <Label
-            tooltip={`If your total CPP/OAS contribution years will be fewer than 38 by your planned retirement age (${person.retirementAge}), enter the exact number you expect to have contributed. 38 years = full benefit (~$1,365/mo CPP + $713/mo OAS at age 65).`}
+            tooltip={`CPP is based on years you contributed (worked and paid into CPP). OAS is based on years of Canadian residency after age 18. If either will be fewer than 40 years by retirement age ${person.retirementAge}, enter the lower number. 40 years residency = full OAS (~$727/mo at 65). 39+ contribution years = near-full CPP (~$1,365/mo at 65).`}
           >
-            CPP/OAS Contribution Years
+            CPP Contribution Years / OAS Residency Years by Retirement (if less than 40)
           </Label>
-          <Input value={person.cppContributionYears} onChange={(v) => setPerson('cppContributionYears', v as number)} min={0} max={39} />
-          <p className="text-[10px] mt-1" style={{ color: '#b0aca6' }}>
+          <Input value={person.cppContributionYears} onChange={(v) => setPerson('cppContributionYears', v as number)} min={0} max={40} />
+          <p className="text-[11px] mt-1" style={{ color: '#b0aca6' }}>
             {yearsToRetirement > 0
               ? `~${yearsToRetirement} working years until retirement.`
               : 'At or past retirement age.'}{' '}
-            38 years = full CPP/OAS.
+            40 years = full OAS · 39+ years = full CPP.
           </p>
         </div>
 
@@ -286,24 +286,24 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
             </thead>
             <tbody>
               <tr>
-                <td className="py-1.5 pr-2"><span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>RRSP</span></td>
+                <td className="py-1.5 pr-2"><span className="text-[13px] font-semibold" style={{ color: '#1a1a1a' }}>RRSP</span></td>
                 <td className="py-1.5 pr-2"><DollarInput value={savings.rrspBalance} onChange={(v) => setSavings('rrspBalance', v)} /></td>
                 <td className="py-1.5"><SliderInput value={savings.rrspAnnualContribution} onChange={(v) => setSavings('rrspAnnualContribution', v)} min={0} max={31560} step={500} /></td>
               </tr>
               <tr>
-                <td className="py-1.5 pr-2"><span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>TFSA</span></td>
+                <td className="py-1.5 pr-2"><span className="text-[13px] font-semibold" style={{ color: '#1a1a1a' }}>TFSA</span></td>
                 <td className="py-1.5 pr-2"><DollarInput value={savings.tfsaBalance} onChange={(v) => setSavings('tfsaBalance', v)} /></td>
                 <td className="py-1.5"><SliderInput value={savings.tfsaAnnualContribution} onChange={(v) => setSavings('tfsaAnnualContribution', v)} min={0} max={20000} step={500} /></td>
               </tr>
               <tr>
-                <td className="py-1.5 pr-2"><span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>Non-Reg</span></td>
+                <td className="py-1.5 pr-2"><span className="text-[13px] font-semibold" style={{ color: '#1a1a1a' }}>Non-Reg</span></td>
                 <td className="py-1.5 pr-2"><DollarInput value={savings.nonRegBalance} onChange={(v) => setSavings('nonRegBalance', v)} /></td>
                 <td className="py-1.5"><SliderInput value={savings.nonRegAnnualContribution} onChange={(v) => setSavings('nonRegAnnualContribution', v)} min={0} max={50000} step={500} /></td>
               </tr>
               <tr>
                 <td className="py-1.5 pr-2">
                   <div className="tooltip">
-                    <span className="text-xs font-semibold underline decoration-dotted cursor-help" style={{ color: '#1a1a1a' }}>Other*</span>
+                    <span className="text-[13px] font-semibold underline decoration-dotted cursor-help" style={{ color: '#1a1a1a' }}>Other*</span>
                     <div className="tooltip-content">Pensions, spousal pensions, or any guaranteed income available after retirement.</div>
                   </div>
                 </td>

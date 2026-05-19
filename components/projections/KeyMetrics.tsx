@@ -24,9 +24,9 @@ function Card({
       className="rounded-lg border p-3 flex flex-col gap-0.5"
       style={{ borderColor: '#e5e7eb', background: '#fff', ...style }}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: '#6b7280' }}>{label}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#6b7280' }}>{label}</p>
       <p className="text-xl font-bold leading-tight" style={{ color: '#111827' }}>{value}</p>
-      {sub && <p className="text-[10px]" style={{ color: '#9ca3af' }}>{sub}</p>}
+      {sub && <p className="text-[11px]" style={{ color: '#9ca3af' }}>{sub}</p>}
     </div>
   )
 }
@@ -71,11 +71,11 @@ export default function KeyMetrics({ results, inputs }: Props) {
           background: runwayOk ? '#f0fdf4' : '#fef2f2',
         }}
       >
-        <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: '#6b7280' }}>Portfolio Runway</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: '#6b7280' }}>Portfolio Runway</p>
         <p className="text-xl font-bold leading-tight" style={{ color: runwayOk ? '#059669' : '#dc2626' }}>
           {results.portfolioRunwayYears} yrs
         </p>
-        <p className="text-[10px]" style={{ color: '#9ca3af' }}>Need {runwayNeeded} yrs</p>
+        <p className="text-[11px]" style={{ color: '#9ca3af' }}>Need {runwayNeeded} yrs</p>
       </div>
     </div>
   )

@@ -57,9 +57,9 @@ const INCOME_COLORS = {
   CPP: '#2563eb',
   OAS: '#059669',
   Pension: '#7c3aed',
-  'RRSP Draw': '#60a5fa',
-  'TFSA Draw': '#34d399',
-  'Non-Reg Draw': '#fbbf24',
+  'RRSP Draw': '#1a1a1a',
+  'TFSA Draw': '#5c5c5c',
+  'Non-Reg Draw': '#c9964c',
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -201,10 +201,10 @@ export default function CashFlowSection({ results, inputs, onRunSimulation }: Pr
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0ede8" vertical={false} />
-                <XAxis dataKey="age" tick={{ fontSize: 10, fill: '#9a9a9a' }} tickLine={false} axisLine={false} interval={accumXInterval} />
-                <YAxis tickFormatter={fmtY} tick={{ fontSize: 10, fill: '#9a9a9a' }} tickLine={false} axisLine={false} width={52} />
+                <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#9a9a9a' }} tickLine={false} axisLine={false} interval={accumXInterval} />
+                <YAxis tickFormatter={fmtY} tick={{ fontSize: 11, fill: '#9a9a9a' }} tickLine={false} axisLine={false} width={52} />
                 <Tooltip content={<BalanceTooltip phase="accum" />} cursor={{ stroke: '#e8e6e1', strokeWidth: 1 }} />
-                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '12px', color: '#5c5c5c' }} iconType="square" />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '12px', color: '#5c5c5c' }} iconType="square" />
                 <Area type="monotone" dataKey="RRSP" stackId="a" fill="url(#g-rrsp-a)" stroke="#1a1a1a" strokeWidth={1.5} />
                 <Area type="monotone" dataKey="TFSA" stackId="a" fill="url(#g-tfsa-a)" stroke="#5c5c5c" strokeWidth={1.5} />
                 <Area type="monotone" dataKey="Non-Reg" stackId="a" fill="url(#g-nr-a)" stroke="#c9964c" strokeWidth={1.5} />
@@ -237,8 +237,8 @@ export default function CashFlowSection({ results, inputs, onRunSimulation }: Pr
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0ede8" vertical={false} />
-                <XAxis dataKey="age" tick={{ fontSize: 10, fill: '#9a9a9a' }} tickLine={false} axisLine={false} interval={distXInterval} />
-                <YAxis tickFormatter={fmtY} tick={{ fontSize: 10, fill: '#9a9a9a' }} tickLine={false} axisLine={false} width={52} />
+                <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#9a9a9a' }} tickLine={false} axisLine={false} interval={distXInterval} />
+                <YAxis tickFormatter={fmtY} tick={{ fontSize: 11, fill: '#9a9a9a' }} tickLine={false} axisLine={false} width={52} />
                 <Tooltip content={<BalanceTooltip phase="dist" />} cursor={{ stroke: '#e8e6e1', strokeWidth: 1 }} />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: '#5c5c5c' }} iconType="square" />
                 <Area type="monotone" dataKey="RRSP" stackId="d" fill="url(#g-rrsp-d)" stroke="#1a1a1a" strokeWidth={1.5} />
@@ -249,14 +249,14 @@ export default function CashFlowSection({ results, inputs, onRunSimulation }: Pr
 
             {/* 2b: Annual income breakdown */}
             <div className="mt-3 pt-4" style={{ borderTop: '1px solid #f0ede8' }}>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: '#9a9a9a' }}>
+              <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: '#9a9a9a' }}>
                 Annual Income by Source
               </p>
               <ResponsiveContainer width="100%" height={150}>
                 <BarChart data={distData} margin={{ top: 0, right: 8, bottom: 4, left: 12 }} barCategoryGap="15%">
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0ede8" vertical={false} />
-                  <XAxis dataKey="age" tick={{ fontSize: 10, fill: '#9a9a9a' }} tickLine={false} axisLine={false} interval={distXInterval} />
-                  <YAxis tickFormatter={fmtY} tick={{ fontSize: 10, fill: '#9a9a9a' }} tickLine={false} axisLine={false} width={52} />
+                  <XAxis dataKey="age" tick={{ fontSize: 11, fill: '#9a9a9a' }} tickLine={false} axisLine={false} interval={distXInterval} />
+                  <YAxis tickFormatter={fmtY} tick={{ fontSize: 11, fill: '#9a9a9a' }} tickLine={false} axisLine={false} width={52} />
                   <Tooltip content={<IncomeTooltip />} cursor={{ fill: 'rgba(0,0,0,0.03)' }} />
                   <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: '#5c5c5c' }} iconType="square" />
                   <Bar dataKey="CPP" stackId="i" fill={INCOME_COLORS.CPP} maxBarSize={22} />
@@ -270,18 +270,18 @@ export default function CashFlowSection({ results, inputs, onRunSimulation }: Pr
 
               {/* colour key */}
               <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 pt-3" style={{ borderTop: '1px solid #f0ede8' }}>
-                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#9a9a9a', width: '100%' }}>Government income</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#9a9a9a', width: '100%' }}>Government income</span>
                 {(['CPP', 'OAS', 'Pension'] as const).map(k => (
                   <div key={k} className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-sm inline-block" style={{ background: INCOME_COLORS[k] }} />
-                    <span className="text-[10px]" style={{ color: '#5c5c5c' }}>{k}</span>
+                    <span className="text-[11px]" style={{ color: '#5c5c5c' }}>{k}</span>
                   </div>
                 ))}
                 <span className="text-[10px] font-semibold uppercase tracking-wider mt-1" style={{ color: '#9a9a9a', width: '100%' }}>Portfolio drawdown</span>
                 {(['RRSP Draw', 'TFSA Draw', 'Non-Reg Draw'] as const).map(k => (
                   <div key={k} className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-sm inline-block" style={{ background: INCOME_COLORS[k] }} />
-                    <span className="text-[10px]" style={{ color: '#5c5c5c' }}>{k}</span>
+                    <span className="text-[11px]" style={{ color: '#5c5c5c' }}>{k}</span>
                   </div>
                 ))}
               </div>

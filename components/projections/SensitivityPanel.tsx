@@ -57,7 +57,7 @@ export default function SensitivityPanel({ baseInputs }: Props) {
     const diff = val - baseVal
     if (Math.abs(diff) < 1) return null
     return (
-      <span className="text-[10px] ml-1" style={{ color: diff > 0 ? '#059669' : '#dc2626' }}>
+      <span className="text-[11px] ml-1" style={{ color: diff > 0 ? '#059669' : '#dc2626' }}>
         ({diff > 0 ? '+' : ''}{prefix}{diff >= 1000 ? `${(diff / 1000).toFixed(0)}K` : diff.toFixed(0)})
       </span>
     )
@@ -67,7 +67,7 @@ export default function SensitivityPanel({ baseInputs }: Props) {
     <div className="rounded-lg border p-4" style={{ borderColor: '#e5e7eb', background: '#fff' }}>
       <div className="mb-3">
         <h3 className="text-sm font-semibold" style={{ color: '#111827' }}>Sensitivity Analysis</h3>
-        <p className="text-[11px]" style={{ color: '#6b7280' }}>
+        <p className="text-[12px]" style={{ color: '#6b7280' }}>
           Drag to see how return assumptions impact your plan
         </p>
       </div>
@@ -89,7 +89,7 @@ export default function SensitivityPanel({ baseInputs }: Props) {
             <button
               key={s.label}
               onClick={() => setSliderValue(i)}
-              className="text-[10px] font-medium transition-colors"
+              className="text-[11px] font-medium transition-colors"
               style={{ color: i === sliderValue ? s.color : '#9ca3af' }}
             >
               {s.label}
@@ -172,7 +172,7 @@ export default function SensitivityPanel({ baseInputs }: Props) {
         </table>
       </div>
 
-      <p className="text-[10px] mt-3" style={{ color: '#9ca3af' }}>
+      <p className="text-[11px] mt-3" style={{ color: '#9ca3af' }}>
         Bear/Bull scenarios adjust equity return ±3%, bonds ±1.2%, inflation ∓0.75% from base assumptions. Click any row to focus it.
       </p>
     </div>
