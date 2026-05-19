@@ -1,6 +1,6 @@
 import type { RetirementInputs, YearlyProjection, ProjectionResults, MonteCarloResult } from '@/types/retirement'
 import { calcCombinedTax } from './canadian-tax'
-import { estimateCppMonthly, calcOasMonthly } from './cpp-oas'
+import { estimateCppMonthly, calcBaseOasMonthly, applyOasClawback } from './cpp-oas'
 import { CURRENT_YEAR } from './utils'
 
 function getBlendedReturn(a: RetirementInputs['assumptions']): number {
@@ -36,7 +36,8 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
     person.cppContributionYears,
     person.retirementAge
   )
-  const oasMonthly = calcOasMonthly(cppMonthly * 12, 65)
+  // Base OAS before clawback — prorated by residency years (40 = full benefit)
+  const baseOasMonthly = calcBaseOasMonthly(person.cppContributionYears)
 
   let rrsp = savings.rrspBalance
   let tfsa = savings.tfsaBalance
@@ -85,16 +86,20 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
       expenses = 0
     } else {
       const targetSpend = desiredRetirementIncome * inflationFactor
+      const baseOasInflated = baseOasMonthly * inflationFactor  // monthly, inflation-scaled
 
       cppIncome = cppMonthly * 12 * inflationFactor
-      oasIncome = age >= 65 ? oasMonthly * 12 * inflationFactor : 0
       pensionIncome =
         savings.otherPostRetirementMonthly > 0 && age >= savings.otherPostRetirementStartAge
           ? savings.otherPostRetirementMonthly * 12 * inflationFactor
           : 0
 
-      const guaranteedIncome = cppIncome + oasIncome + pensionIncome
-      const shortfall = Math.max(0, targetSpend - guaranteedIncome)
+      // Step 1: Estimate OAS using only CPP + pension (no withdrawals yet) to determine shortfall
+      const oasEstimate = age >= 65
+        ? applyOasClawback(baseOasInflated, cppIncome + pensionIncome) * 12
+        : 0
+      const guaranteedEstimate = cppIncome + oasEstimate + pensionIncome
+      const shortfall = Math.max(0, targetSpend - guaranteedEstimate)
 
       rrsp = rrsp * (1 + nominalReturn)
       tfsa = tfsa * (1 + nominalReturn)
@@ -117,7 +122,13 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
         nonReg = Math.max(0, nonReg - nonRegWithdrawal)
       }
 
-      const grossIncome = guaranteedIncome + rrspWithdrawal + nonRegWithdrawal * 0.5
+      // Step 2: Recalculate OAS clawback using actual taxable income (excludes TFSA withdrawals)
+      const taxableIncomeForClawback = cppIncome + pensionIncome + rrspWithdrawal + nonRegWithdrawal * 0.5
+      oasIncome = age >= 65
+        ? applyOasClawback(baseOasInflated, taxableIncomeForClawback) * 12
+        : 0
+
+      const grossIncome = cppIncome + oasIncome + pensionIncome + rrspWithdrawal + nonRegWithdrawal * 0.5
       taxPaid = calcCombinedTax(Math.max(0, grossIncome))
       expenses = targetSpend
     }
@@ -159,6 +170,8 @@ export function runProjection(inputs: RetirementInputs): ProjectionResults {
 
   const retirementRow = yearly.find((r) => r.age === person.retirementAge)
   const retirementPortfolio = retirementRow?.totalPortfolio ?? 0
+  // Use first retirement year's actual OAS (post-clawback) for display
+  const oasMonthly = retirementRow ? retirementRow.oasIncome / 12 : 0
 
   const retirementRows = yearly.filter((r) => r.phase === 'retirement')
   const lastPositiveRow = [...retirementRows].reverse().find((r) => r.totalPortfolio > 0)
@@ -200,8 +213,10 @@ function runMonteCarlo(inputs: RetirementInputs, runs = 1000): MonteCarloResult 
   const inflation = assumptions.inflationRate / 100
 
   const cppAnnual = estimateCppMonthly(person.currentIncome, person.cppContributionYears, person.retirementAge) * 12
-  const oasAnnual = calcOasMonthly(cppAnnual, 65) * 12
+  const baseOasAnnual = calcBaseOasMonthly(person.cppContributionYears) * 12
   const pensionAnnual = savings.otherPostRetirementMonthly * 12
+  // For Monte Carlo, apply clawback using desiredRetirementIncome as proxy for total income
+  const oasAnnual = Math.max(0, baseOasAnnual - Math.max(0, desiredRetirementIncome - 86912) * 0.15)
   const govtIncome = cppAnnual + oasAnnual + pensionAnnual
 
   const allBalances: number[][] = Array.from({ length: totalYears }, () => [])
