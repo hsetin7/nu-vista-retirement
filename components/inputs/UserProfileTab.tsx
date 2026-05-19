@@ -243,16 +243,16 @@ export default function UserProfileTab({ inputs, onChange }: Props) {
 
         <div>
           <Label
-            tooltip={`CPP is based on years you contributed (worked and paid into CPP). OAS is based on years of Canadian residency after age 18. If either will be fewer than 40 years by retirement age ${person.retirementAge}, enter the lower number. 40 years residency = full OAS (~$727/mo at 65). 39+ contribution years = near-full CPP (~$1,365/mo at 65).`}
+            tooltip={`CPP pays full ~$1,365/mo at 65 after 39 years of contributions (working & paying into CPP). OAS pays full ~$713/mo at 65 after 40 years of Canadian residency. If you expect fewer than 39–40 years by retirement, enter the lower number — both benefits are prorated accordingly.`}
           >
-            CPP Contribution Years / OAS Residency Years by Retirement (if less than 40)
+            CPP / OAS Qualifying Years
           </Label>
           <Input value={person.cppContributionYears} onChange={(v) => setPerson('cppContributionYears', v as number)} min={0} max={40} />
           <p className="text-[11px] mt-1" style={{ color: '#b0aca6' }}>
             {yearsToRetirement > 0
-              ? `~${yearsToRetirement} working years until retirement.`
+              ? `~${yearsToRetirement} working years left.`
               : 'At or past retirement age.'}{' '}
-            40 years = full OAS · 39+ years = full CPP.
+            Default 38 = near-full benefits. Lower this if you worked fewer years or lived outside Canada for a period.
           </p>
         </div>
 
